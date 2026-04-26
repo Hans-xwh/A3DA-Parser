@@ -70,7 +70,7 @@ A big thank you to the amazing people that helped along the way ;)
 
 **Hoshi** - For explaining to me how to create scale morphs for use in MMD, and for beta testing.  
 
-**Danii18** - For the method to convert any camera to a float FOV camera for using with modded MMD.  
+**Daniii18** - For the method to convert any camera to a float FOV camera for using with modded MMD.  
 
 **Easter Fox** - For providing amazing motions, and helping with beta testing the Full PV Import function.  
 
