@@ -74,6 +74,6 @@ A big thank you to the amazing people that helped along the way ;)
 
 **Daniii18** - For the method to convert any camera to a float FOV camera for using with modded MMD.  
 
-**Easter Fox** - For providing amazing motions, and helping with beta testing the Full PV Import function.  
+**Eastern Fox** - For providing amazing motions, and helping with beta testing the Full PV Import function.  
 
 **LudoMako** - For beta testing and catching bugs in basically everywhere lol.  
