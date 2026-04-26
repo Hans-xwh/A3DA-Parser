@@ -53,9 +53,11 @@ In the file picker window, the "Mode" dropdown switches between importing modes;
 
 If a folder is selected in Single File mode, all files in the selected folder will be imported with the same settings.  
 
-Files from F2nd, like .pfl, are encrypted and must be decrypted first.
+Files from F2nd, like .pfl, are encrypted and must be decrypted first.  
 
-I hope this helps even a bit to any poor souls dealing with Sega's wicked animation format.
+Quick usage [tutorial](https://youtu.be/_lACNP65F8o) about Full PV Import  
+
+I hope this helps even a bit to any poor souls dealing with Sega's wicked animation format.  
 
 
 ## Acknowledgments
