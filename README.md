@@ -1,43 +1,77 @@
 # A3DA Parser
-Project Diva A3DA stage animation importer for Blender (somewhat functional).
-
-Im working on this, but I'll take some time to polish it before uploading it.
-This version is realy old... I wouldn't recommend using it. This doesn't reflect my current version!
+A Blender addon for importing and exporting Auth3D animation from the Project Diva game saga. 
 
 
-
-
+### Examples
 https://github.com/user-attachments/assets/d781be2a-18ee-444f-9dd8-1af4e50a5f9b
 
+[Gaikotsu Gakudan To Riria](https://youtu.be/GbVOTZgaXsw)  
+
+[Ghost Rule](https://youtu.be/YU3VF_tHu4g)
+
+## Features
+Import & export Auth3D Assembly files (.a3da) from Blender.  
+
+This tool is compatible with .a3da files from all games of the Project Diva saga, however they must be in the text format.  
+Also supports Miracle Girls Festival, since it's built on the same game engine as the Project Diva games.
+
+Full PV Import supports:
+- Project Diva Future Tone / MegaMix+
+- Project Diva F
+- Project Diva F2nd
+
+Single file and Camera importer supports a3da from any game.  
+**Just make sure the .a3da files are text, not binary.**
+
+### Import
+| Feature | Support | Details |
+| --- | --- | --- |
+| Full PV import | ✅ Supported | Import a whole PV by loading all a3da files, a dsc file, and pv_field / pfl. |
+| Camera animation | ✅ Supported | Transformations & DOF |
+| Object animation | ✅ Supported | Transformations, visibility & instances fully supported |
+| Texture transformations | ✅ Supported | Transformations & patterns supported |
+| Looping animations | ✅ Supported | Loops are set up as FCurve modifiers |
+| Morphs | ⚠️ Partial Support | Dummy shape keys are created & animated, requires manual setup of morphs. |
+| HRC skeletal animation | ⚠️ Partial Support | Transforms & visibility supported, but requires retarget to model after import. |
+| Lights | ❌ Not supported | Who turned the lights off? |
 
 
+### Export
+The export functionality is still experimental, but the produced files will load & work on Future Tone at least.  
+As a demo, I've included an a3da camera i made a while ago for Mobious-P's mocap of the song JumpUp by Deco*27. Never finished it but works as a test file lol.  
 
-Another example, Common World Domination
-https://youtu.be/QDQPE-ZaXfo
+### Miscellaneous
+A lot of miscellaneous tools are built in, to help with model setup, manipulation of imported animation, conversion to MMD ready assets, and creation of Auth3D animation.
 
-Gaikotsu Gakudan To Riria https://youtu.be/t4o9OkwPAO4
-
-Object instances & Change Field commands - [Ghost Rule](https://youtu.be/YU3VF_tHu4g)
+## Installation
+Download the zip file from Releases, then drag & drop into Blender 5.0 or newer.
 
 ## Usage
-- Import the stage model, and apply all rotations. The script will change all object names to uppercase, so make sure no conflicts will occur. If needed, rename the meshes.
-- Load the script in the blender scripting tab, set the path to your A3DA file, and hit run.
-- Controllers will be created for each object declared in the A3DA, and the script will try to match the controllers to existing objects on the scene.
-- The framerate for every (i think) PV is 60fps.
-- Its possible to import multiply A3DA files, just load them one after the other.
+You'll find the import button in File > Import > Diva A3DA Animation (.a3da), as well as in the A3DA N-Panel.  
 
-## Limits
-Some transformations are weird after importing, and i dont know why. Some objects will be fixed by inverting their Z rotation, I'm still not sure why this happens.
+In the file picker window, the "Mode" dropdown switches between importing modes; Single File, Import Camera, and Full PV Import.  
 
-Right now supports only stage object animation.
-It does not support camera anim, morphs, lights, instance animation, and HRC bone anim.
+If a folder is selected in Single File mode, all files in the selected folder will be imported with the same settings.  
 
-This is my first time trying to write a Blender script, so don't expect this to work perfectly.
-Im open to any feedback!
+Files from F2nd, like .pfl, are encrypted and must be decrypted first.
 
-## Next Steps
-I'll fix whatever is causing the weird rotations. 
-I plant to keep working on this to support at least: 
-DivaScript _change field_ commands, instance animation, and camera animation. 
+I hope this helps even a bit to any poor souls dealing with Sega's wicked animation format.
 
-A3DA animations are meant to be cyclic, it also stores interpolation data, and some kind of visibility animation. Handling this is my top priority right now. 
+
+## Acknowledgments
+This project was possible thanks to the help of the Project Diva community.  
+A big thank you to the amazing people that helped along the way ;)  
+
+**KorenKonder** - For [ReDiva](https://github.com/korenkonder/ReDIVA), and for the invaluable messages with random Diva knowledge scattered around Diva Modding 2nd lol.  
+
+**Nastys** - For the DSC command database from [Open PD Script Editor](https://github.com/nastys/Open-PD-Script-Editor).  
+
+**ChicoEevee** - For helping with HRC export functionality & providing files for testing.  
+
+**Hoshi** - For explaining to me how to create scale morphs for use in MMD, and for beta testing.  
+
+**Danii18** - For the method to convert any camera to a float FOV camera for using with modded MMD.  
+
+**Easter Fox** - For providing amazing motions, and helping with beta testing the Full PV Import function.  
+
+**LudoMako** - For beta testing and catching bugs in basically everywhere lol.  
