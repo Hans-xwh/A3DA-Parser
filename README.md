@@ -38,7 +38,7 @@ Single file and Camera importer supports a3da from any game.
 
 ### Export
 The export functionality is still experimental, but the produced files will load & work on Future Tone at least.  
-As a demo, I've included an a3da camera i made a while ago for Mobious-P's mocap of the song JumpUp by Deco*27. Never finished it but works as a test file lol.  
+As a demo, I've included an a3da camera i made a while ago for Mobius-P's mocap of the song JumpUp by Deco*27. Never finished it but works as a test file lol.  
 
 ### Miscellaneous
 A lot of miscellaneous tools are built in, to help with model setup, manipulation of imported animation, conversion to MMD ready assets, and creation of Auth3D animation.
