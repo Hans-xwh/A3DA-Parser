@@ -504,7 +504,7 @@ def ensureAction(target:bpy.types.Object) -> bpy.types.Action:
 
     return action
 
-def getChannelbag(target:bpy.types.ID, anim_data:bpy.types.AnimData|None=None) -> bpy.types.ActionChannelbag | None: #Should work on anything
+def getChannelbag(target:bpy.types.ID, anim_data:bpy.types.AnimData|None=None, ensure=False) -> bpy.types.ActionChannelbag | None: #Should work on anything
     if anim_data is None:
         anim_data = target.animation_data
     if not anim_data: return None
@@ -512,7 +512,7 @@ def getChannelbag(target:bpy.types.ID, anim_data:bpy.types.AnimData|None=None) -
     action = anim_data.action
     if not action or not action.layers or not action.layers[0].strips: return None #Idk if this can even trigger, but better safe than sorry
     
-    return action.layers[0].strips[0].channelbag(anim_data.action_slot)
+    return action.layers[0].strips[0].channelbag(anim_data.action_slot, ensure=ensure)
 
 def getFcurve(target:bpy.types.ID, data_path:str, index:int=None) -> bpy.types.FCurve | None:
     channelbag = getChannelbag(target)

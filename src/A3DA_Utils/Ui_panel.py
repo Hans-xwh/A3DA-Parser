@@ -4,7 +4,8 @@ from . import EmptiesToBones
 from . import EmptiesToBones_Legacy
 from . import Bind_armatures
 from . import FixMats
-from . import MMD_ready_cam
+#from . import MMD_ready_cam_og
+from . import FOV_ready_cam
 from . import Visibility_Editor
 
 import bpy
@@ -31,6 +32,7 @@ class A3DA_PT_main_panel(bpy.types.Panel):  #Main panel
         col.operator("a3da_utils.fix_mats", icon='SHADERFX')
         col.operator("a3da_utils.visibility_edit", icon='VIS_SEL_11')
         col.operator("a3da_utils.mmdfy_camera", icon='CAMERA_DATA')
+        #col.operator("a3da_utils.mmdfy_camera_og", icon='CAMERA_DATA')
 
 class A3DA_Utils_OT_EmptiesToBonesLegacy(bpy.types.Operator):
     bl_idname = "a3da_utils.empties_to_bones_legacy"
@@ -64,7 +66,8 @@ classes = [
     Visibility_Editor.A3DA_Utils_OT_VisibilityEditor,
     A3DA_Utils_OT_EmptiesToBonesLegacy,
     A3DA_Utils_OT_BindArmatures,
-    MMD_ready_cam.A3DA_Utils_OT_MMDfy_camera,
+    #MMD_ready_cam_og.A3DA_Utils_OT_MMDfy_camera_og,
+    FOV_ready_cam.A3DA_Utils_OT_MMDfy_camera,
     EmptiesToBones.A3DA_Utils_OT_EmptiesToBones,
     EmptiesToBones.A3DA_Utils_OT_TransferDummyMorph,
     A3DA_PT_main_panel

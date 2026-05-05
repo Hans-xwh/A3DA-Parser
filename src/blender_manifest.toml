@@ -2,7 +2,7 @@ schema_version = "1.0.0"
 
 id = "a3da_parser"
 name = "A3DA Parser"
-version = "1.0.0"
+version = "1.0.1"
 blender_version_min = "5.0.0"
 
 tagline = "Import & export Project Diva A3DA animation files"
@@ -20,6 +20,6 @@ files = "Import and export Project Diva A3DA animation files"
 [build]
 paths_exclude_pattern = [
     "__pycache__/",
-    "/*.md",
+    "changelog.md",
     "*.old"
 ]
