@@ -173,6 +173,7 @@ class A3daChannel:
                     self.ep_pre = 2
                 elif mod.mode_before == 'REPEAT_OFFSET':
                     self.ep_pre = 3
+                    
                 if mod.mode_after == 'REPEAT':
                     self.ep_post = 2
                 elif mod.mode_after == 'REPEAT_OFFSET':

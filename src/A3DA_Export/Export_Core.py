@@ -31,8 +31,8 @@ def get_channel_lines(prefix:str, channel:A3daChannel) -> list[str]:
     #Type 3 - Frame, Value, Tangent1 and Tangent0
 
     #A3DA Key types: (from KorenKonder)
-    #Type 0 - Reset value for entire Key to 0
-    #Type 1 - Set value for entire Key for some value
+    #Type 0 - Reset value for entire Key to 0       (Channel stays at 0)
+    #Type 1 - Set value for entire Key for some value       (Single key, channel stays at some value)
     #Type 2 - Linear interpolation between previous and current keys
     #Type 3 - Cubic Hermite Spline between previous and current keys
     #Type 4 - Hold value of last key until it reaches another key in that Key
@@ -41,6 +41,12 @@ def get_channel_lines(prefix:str, channel:A3daChannel) -> list[str]:
         lines.append(f'{prefix}.type=1')
         lines.append(f'{prefix}.value={channel.keys[0].value:.9g}') #Round and trim useless 0s
     else:
+        #Ep_types
+        if channel.ep_post > 0:
+            lines.append(f'{prefix}.ep_type_post={channel.ep_post}')
+        if channel.ep_pre > 0:
+            lines.append(f'{prefix}.ep_type_pre={channel.ep_pre}')
+
         sorted_keys = {k: channel.keys[k] for k in sorted(channel.keys.keys(), key=str)}    #A3da is stupid and expects key sorted in ALPHABETICAL order
         for id, key in sorted_keys.items():
             kv_type = decide_kv_type(key)
@@ -76,6 +82,12 @@ def get_channel_raw(prefix:str, channel:A3daChannel) -> list[str]:
 
         raw_data_list.append(f'{key.as_txt(kv_type)}')
     raw_data:str = ",".join(raw_data_list)
+    
+    #Ep type
+    if channel.ep_post > 0:     #Im actually not sure if the game supports ep_type for raw channels, i haven't seen this in original files
+        lines.append(f'{prefix}.ep_type_post={channel.ep_post}')
+    if channel.ep_pre > 0:
+        lines.append(f'{prefix}.ep_type_pre={channel.ep_pre}')
 
     #add lines
     lines.append(f'{prefix}.max={int(max)+1}')
