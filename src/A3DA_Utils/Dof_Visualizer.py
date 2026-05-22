@@ -6,10 +6,10 @@ import bpy
 from bpy.types import Operator
 from bpy.props import BoolProperty
 
-class A3DA_Utils_OT_FovNodes(Operator):
-    bl_idname = "a3da_utils.fov_nodes"
-    bl_label = "Add FOV Nodes"
-    bl_description = "Adds Aura's FOV visualization node to the scene compositor."
+class A3DA_Utils_OT_DofNodes(Operator):
+    bl_idname = "a3da_utils.dof_nodes"
+    bl_label = "Add DOF Nodes"
+    bl_description = "Adds Aura's DOF visualization node to the scene compositor."
     bl_options = {"REGISTER", "UNDO"}
 
     edit_scene: BoolProperty( #type: ignore
