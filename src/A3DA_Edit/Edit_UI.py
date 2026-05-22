@@ -85,6 +85,9 @@ def draw_cam(context:bpy.types.Context, layout:bpy.types.UILayout, show_all=Fals
         obj = context.active_object
         layout.prop(obj, "scale", index=0, text="Focus Range")
         layout.prop(obj, "rotation_euler", index=0, text="Fuzzing Range")   #TODO make this point to a custom property, and the custom prop to drive the rotation, or idk but this is janky
+        layout.prop(obj, "rotation_euler", index=1, text="Ratio")
+        #layout.prop(obj, "rotation_euler", index=2, text="Enable")
+        layout.prop(obj, "rotation_euler", index=2, text="Enable")
     
 
 classes = [

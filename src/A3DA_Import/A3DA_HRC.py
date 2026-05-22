@@ -226,13 +226,19 @@ def animateHrc(hrc:HrcObject, frameOffset=0, use_ghost:bool=True) -> bpy.types.A
                 channel = node.getTransform(transform, axis)
 
                 #Ensure fcurve exists
-                fcurve = action.fcurve_ensure_for_datablock(    #THANKS FOR THIS FUNCTION
-                    datablock= armObj,
-                    data_path= f'pose.bones["{node.name}"].{switchAxis(transform)}',
-                    index= switchAxis(axis),
-                    group_name= node.name   #Disable this line to use on 4.5. This groups all fcurves for a bone by its name.
-                )
-                #fcurve.group = node.name   #Set group to bone name after, makes it work on 4.5
+                if bpy.app.version >= (5, 0, 0):
+                    fcurve = action.fcurve_ensure_for_datablock(    #THANKS FOR THIS FUNCTION
+                        datablock= armObj,
+                        data_path= f'pose.bones["{node.name}"].{switchAxis(transform)}',
+                        index= switchAxis(axis),
+                        group_name= node.name   #Disable this line to use on 4.5. This groups all fcurves for a bone by its name.
+                    )
+                else:
+                    fcurve = action.fcurve_ensure_for_datablock(
+                        datablock= armObj,
+                        data_path= f'pose.bones["{node.name}"].{switchAxis(transform)}',
+                        index= switchAxis(axis),
+                    )
 
                 #Write keys to Blender
                 setA3daChannel(
@@ -245,13 +251,19 @@ def animateHrc(hrc:HrcObject, frameOffset=0, use_ghost:bool=True) -> bpy.types.A
         ### Write visibility ###
         if len(node.visibility.keys) > 0:
             channel = node.visibility
-            bone["A3DA_VISIBILITY"] = 1
+            bone["A3DA_VISIBILITY"] = 1     #TODO Maybe update this later
 
-            fcurve = action.fcurve_ensure_for_datablock(
-                datablock= armObj,
-                data_path= f'pose.bones["{node.name}"].["A3DA_VISIBILITY"]',
-                group_name= node.name
-            )
+            if bpy.app.version >= (5, 0, 0):
+                fcurve = action.fcurve_ensure_for_datablock(
+                    datablock= armObj,
+                    data_path= f'pose.bones["{node.name}"].["A3DA_VISIBILITY"]',
+                    group_name= node.name
+                )
+            else:
+                fcurve = action.fcurve_ensure_for_datablock(
+                    datablock= armObj,
+                    data_path= f'pose.bones["{node.name}"].["A3DA_VISIBILITY"]',
+                )
 
             setA3daChannel(
                 fcurve= fcurve,

@@ -1,5 +1,5 @@
 # A3DA Parser
-A Blender addon for importing and exporting Auth3D animation from the Project Diva game saga. 
+A Blender add-on for importing and exporting Auth3D animation from the Project Diva game saga. 
 
 
 ### Examples
@@ -64,7 +64,7 @@ I hope this helps even a bit to any poor souls dealing with Sega's wicked animat
 This project was possible thanks to the help of the Project Diva community.  
 A big thank you to the amazing people that helped along the way ;)  
 
-**KorenKonder** - For [ReDiva](https://github.com/korenkonder/ReDIVA), and for the invaluable messages with random Diva knowledge scattered around Diva Modding 2nd lol.  
+**KorenKonder** - For [PD_Tool](https://github.com/korenkonder/PD_Tool), for [ReDiva](https://github.com/korenkonder/ReDIVA), and for the invaluable messages with random Diva knowledge scattered around Diva Modding 2nd lol.  
 
 **Nastys** - For the DSC command database from [Open PD Script Editor](https://github.com/nastys/Open-PD-Script-Editor).  
 
@@ -77,3 +77,5 @@ A big thank you to the amazing people that helped along the way ;)
 **Eastern Fox** - For providing amazing motions, and helping with beta testing the Full PV Import function.  
 
 **LudoMako** - For beta testing and catching bugs in basically everywhere lol.  
+
+[**Aura**](https://github.com/Aura39) - For the AMAZING work creating the DOF visualization node for the compositor.  

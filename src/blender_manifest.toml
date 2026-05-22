@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 id = "a3da_parser"
 name = "A3DA Parser"
 version = "1.0.20"
-blender_version_min = "5.0.0"
+blender_version_min = "4.5.0"
 
 tagline = "Import & export Project Diva A3DA animation files"
 maintainer = "Hans Xwh"

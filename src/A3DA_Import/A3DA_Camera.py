@@ -62,7 +62,6 @@ class A3daCamera:
             case _:
                 trgt.pushKey(transform, axis, keyframe, keyIndex)
 
-
 def switchAxis(value):
     match value:
         #Camera
@@ -129,7 +128,6 @@ def setupCam(camera:A3daCamera=None, dof:A3daCamObj=None, prefix:str=''):
         dof.bl_reference.auth3d_cam.subtype = 'DOF'
 
 
-
 def setupFovDriver(camera:A3daCamera, compatibility=False) -> tuple[str]:
     if compatibility:
         camera.bl_camera['A3DA_FOV'] = 1.0  #Ensure the custom property exists
@@ -150,6 +148,7 @@ def setupFovDriver(camera:A3daCamera, compatibility=False) -> tuple[str]:
     scaleVar.targets[0].data_path = fov_scale
 
     return fov_prop, fov_scale
+
 
 def animateCamObj(obj:A3daCamObj):
     target = obj.bl_reference

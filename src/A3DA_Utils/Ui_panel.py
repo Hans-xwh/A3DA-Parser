@@ -7,6 +7,7 @@ from . import FixMats
 #from . import MMD_ready_cam_og
 from . import FOV_ready_cam
 from . import Visibility_Editor
+from . import Dof_Visualizer
 
 import bpy
 
@@ -31,6 +32,7 @@ class A3DA_PT_main_panel(bpy.types.Panel):  #Main panel
         col.operator("a3da_utils.bind_armatures", icon='ARMATURE_DATA')
         col.operator("a3da_utils.fix_mats", icon='SHADERFX')
         col.operator("a3da_utils.visibility_edit", icon='VIS_SEL_11')
+        col.operator("a3da_utils.fov_nodes", icon='NODETREE')
         col.operator("a3da_utils.mmdfy_camera", icon='CAMERA_DATA')
         #col.operator("a3da_utils.mmdfy_camera_og", icon='CAMERA_DATA')
 
@@ -70,6 +72,7 @@ classes = [
     FOV_ready_cam.A3DA_Utils_OT_MMDfy_camera,
     EmptiesToBones.A3DA_Utils_OT_EmptiesToBones,
     EmptiesToBones.A3DA_Utils_OT_TransferDummyMorph,
+    Dof_Visualizer.A3DA_Utils_OT_FovNodes,
     A3DA_PT_main_panel
 ]
 
