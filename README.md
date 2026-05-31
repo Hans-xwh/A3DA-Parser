@@ -1,5 +1,6 @@
 # A3DA Parser
-A Blender add-on for importing and exporting Auth3D animation from the Project Diva game saga. 
+A Blender add-on for importing and exporting Auth3D animation from the Project Diva game saga.  
+Also available in [Blender Extensions!](https://extensions.blender.org/add-ons/a3da-parser/)  
 
 
 ### Examples
