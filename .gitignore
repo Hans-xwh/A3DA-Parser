@@ -1,2 +1,6 @@
 __pycache__/
+*.pyc
 *.old
+*.blend1
+*.blend@
+*.zip
