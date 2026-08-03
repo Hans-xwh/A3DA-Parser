@@ -27,7 +27,7 @@ class A3da_Edit_OT_ConvertArmature(Operator):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Modo Sexo: Activado")
+        #layout.label(text="Modo Sexo: Activado")
 
     def execute(self, context):
         root = None
@@ -90,7 +90,7 @@ class A3da_Edit_OT_ConvertModel(Operator):
 
     transfer_mode : EnumProperty(   #type: ignore
         name="Mode",
-        description="Method to transfer animatio",
+        description="Method to transfer animation",
         items=[
             ('COPY', 'Copy FCurves', "!!! WARNING !!! This requires selected objects to be in Auth3D space (rotated 90°), or it will not work!"),
             ('BAKE', "Bake Animation", "Creates empties, then adds and bakes constraints"),
@@ -196,7 +196,7 @@ class A3da_Edit_OT_ConvertCamera(Operator):     #TODO implement this xd
 classes = [
     A3da_Edit_OT_ConvertArmature,
     A3da_Edit_OT_ConvertModel,
-    A3da_Edit_OT_ConvertCamera
+    #A3da_Edit_OT_ConvertCamera
 ]
 
 def register():

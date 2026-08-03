@@ -25,7 +25,7 @@ def sort_obj_by_hierarchy(objects: list[bpy.types.Object]) -> list[bpy.types.Obj
     return sorted_objects   #TODO maybe merge this with the bones thing and make it take both
 
 def build_obj(op:bpy.types.Operator, objects: list[bpy.types.Object], root:bpy.types.Object) -> dict[int, A3daObject]:
-    auto_uid = True
+    #auto_uid = False
     print("Building Objects...")
     a3daObjects = {}
     obj_id = 0
@@ -51,16 +51,24 @@ def build_obj(op:bpy.types.Operator, objects: list[bpy.types.Object], root:bpy.t
         if empty.parent and empty.parent != root:
             obj.parent = empty.parent.name
 
-        if auto_uid:    #TODO maybe make this run on the Blender objects instead of on the go
-            if empty.children and (empty.children[0].type in 'MESH' or empty.children[0].auth3d.auth3d_type == 'MESH_C'):
-                obj.uid_name = empty.children[0].name
-            else:
-                obj.uid_name = "NULL"
+        #if auto_uid:    #TODO maybe make this run on the Blender objects instead of on the go
+        #    if empty.children and (empty.children[0].type in 'MESH' or empty.children[0].auth3d.auth3d_type == 'MESH_C'):
+        #        obj.uid_name = empty.children[0].name
+        #    else:
+        #        obj.uid_name = "NULL"
+        #else:
+        #    if empty.auth3d.uid_name not in {"", None}:
+        #        obj.uid_name = empty.auth3d.uid_name
+        #    else:
+        #        obj.uid_name = "NULL"
+
+        if empty.auth3d.uid_name not in {"", None}:
+            obj.uid_name = empty.auth3d.uid_name
+        elif empty.children and (empty.children[0].type in 'MESH' or empty.children[0].auth3d.auth3d_type == 'MESH_C'):
+            obj.uid_name = empty.children[0].name
         else:
-            if empty.auth3d.uid_name not in {"", None}:
-                obj.uid_name = empty.auth3d.uid_name
-            else:
-                obj.uid_name = "NULL"
+            obj.uid_name = "NULL"
+
 
         ## Read anim from Blender ##
         for transform in ('location', 'rotation_euler', 'scale'):

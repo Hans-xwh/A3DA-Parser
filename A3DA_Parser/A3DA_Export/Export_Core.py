@@ -92,7 +92,8 @@ def get_channel_raw(prefix:str, channel:A3daChannel) -> list[str]:
     #add lines
     lines.append(f'{prefix}.max={int(max)+1}')
     lines.append(f'{prefix}.raw_data.value_list={raw_data}')
-    lines.append(f'{prefix}.raw_data.value_list_size={len(channel.keys)*2}')    #double the keys
+    #lines.append(f'{prefix}.raw_data.value_list_size={len(channel.keys)*2}')    #double the keys
+    lines.append(f'{prefix}.raw_data.value_list_size={len(channel.keys)*(kv_type+1)}')    #Properly calculate this shi omg
     lines.append(f'{prefix}.raw_data.value_type=float')
     lines.append(f'{prefix}.raw_data_key_type={kv_type}')
     lines.append(f'{prefix}.type={channel.interpolation}')

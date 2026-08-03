@@ -75,7 +75,6 @@ def switchAxis(value):
     #if nothing is matched
     return CoreSwAx(value)
 
-
 #### Camera working functions ####
 def setupCam(camera:A3daCamera=None, dof:A3daCamObj=None, prefix:str=''):
     if prefix != '':
@@ -161,6 +160,13 @@ def animateCamObj(obj:A3daCamObj):
             channel = obj.getTransform(transform, axis)
             if len(channel.keys) == 0:
                 continue
+            
+            elif len(channel.keys) == 1:
+                vector = getattr(target, switchAxis(transform))
+                setattr(vector, axis, channel.keys[0].value)
+                target.keyframe_insert(switchAxis(transform), index=switchAxis(axis),
+                                       frame=channel.keys[0].frame)
+                continue
 
             fcurve = action.fcurve_ensure_for_datablock(
                 datablock= target,
@@ -190,8 +196,14 @@ def animateCam(camera:A3daCamera=None, dof:A3daCamObj=None, config:ImportConfig=
         fov_prop, fov_scale = setupFovDriver(camera, config.ensure_compatibility)
         fcurve = cam_action.fcurve_ensure_for_datablock(
             camera.bl_camera, fov_prop)
-        
-        setA3daChannel(fcurve, camera.fov)
+        if len(camera.fov.keys) == 1 and False:
+            vector = getattr(camera.bl_camera.auth3d_cam, 'fov')
+            setattr(camera.bl_camera.auth3d_cam, 'fov', camera.fov.keys[0].frame)
+            camera.bl_camera.keyframe_insert('auth3d_cam.fov',
+                                   frame=camera.fov.keys[0].frame)
+        else:
+            setA3daChannel(fcurve, camera.fov)
+
     else:
         if not camera.bl_camera.data.animation_data:
             camera.bl_camera.data.animation_data_create()    #Assign same action as camera obj
@@ -290,12 +302,16 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                         camera.fov.keys[int(params[5])] = parseA3daKey(data, frameOffset)
                     elif params[4] == 'type':
                         camera.fov.interpolation = int(data)
+                    elif params[4] == 'value':  #Non-key value parsing
+                        camera.fov.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
 
                 elif params[3] == 'roll':
                     if params[4] == 'key' and params[5] != 'length' and params[6] == 'data':
                         camera.roll.keys[int(params[5])] = parseA3daKey(data, frameOffset)
                     elif params[4] == 'type':
                         camera.roll.interpolation = int(data)
+                    elif params[4] == 'value':  #Non-key value parsing
+                        camera.fov.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
 
                 elif params[3] == 'fov_is_horizontal':  #Always 1
                     pass
@@ -322,6 +338,10 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                 if params[3] == 'key' and params[4] != 'length' and params[5] == 'data':  #Regular keys
                     keyIndex = int(params[4])
                     channel.keys[keyIndex] = parseA3daKey(data, frameOffset)
+
+                elif params[3] == 'value':  #Non-key value parsing
+                    kframe = parseA3daKey(data, frameOffset, not_key=True)
+                    channel.keys[0] = kframe
 
                 elif params[3] == 'type':   #Interpolation mode
                     channel.interpolation = int(data)

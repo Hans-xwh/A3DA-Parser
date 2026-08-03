@@ -388,7 +388,7 @@ class A3DA_Utils_OT_TransferDummyMorph(Operator):
 
         #Get sources
         sources = [obj for obj in context.selected_objects
-                   if obj != target and obj.type == 'MESH' and obj.data.shape_keys.animation_data and obj.data.shape_keys.animation_data.action]    #Dear god what is thisss
+                   if obj != target and obj.type == 'MESH' and obj.data.shape_keys and obj.data.shape_keys.animation_data and obj.data.shape_keys.animation_data.action]    #Dear god what is thisss
         
         if not sources:
             self.report({'ERROR'}, "Invalid selection!")
