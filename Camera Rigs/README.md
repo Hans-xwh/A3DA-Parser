@@ -19,3 +19,12 @@ Rigs to retarget standard MMD cameras, FOV modded MMD cameras, and animated floa
 - Select all objects in the Auth3D Camera rig, and bake all transforms. 
 - With the camera object on the Auth3D rig selected run `Bake auth3d fov.py` from the scripting tab.
 - Export your a3da. 
+
+## Dolly camera rig -> Auth3D
+#### Intended for cameras made with the addon "Add Camera Rigs"
+- *Append* the action of your camera rig. 
+- Select the camera rig, and assign your appended action to it. 
+- You can make the **interest** Auth3D object follow the dolly *aim* or directly the camera, depending in your animation one might give a better result than the other.  
+- Select all objects in the Auth3D Camera rig, and bake all transforms. 
+- With the camera object on the Auth3D rig selected run `Bake auth3d fov.py` from the scripting tab. 
+- Export your a3da. 
