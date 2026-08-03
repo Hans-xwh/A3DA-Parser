@@ -5,7 +5,7 @@ Rigs to retarget standard MMD cameras, FOV modded MMD cameras, and animated floa
 ## MMD camera -> Auth3D  
 - Select the MMD camera, and load your VMD to it. 
 - Select all objects in the Auth3D Camera rig, and bake all transforms. 
-- Optionally clean redundant keyframes on the scale. I recommend to leave the rotation and scale as-is. 
+- Optionally clean redundant keyframes on the scale. I recommend to leave the rotation and translation as-is. 
 - With the camera object on the Auth3D rig selected run `Bake auth3d fov.py` from the scripting tab. 
 - Export your a3da. 
 
