@@ -22,7 +22,7 @@ def bake_a3da_fov(context:Context):
     #Bake
     print(f"Baking FOV for {target_cam.name} from frame {start_frame} to {end_frame}...")
 
-    lastKey = 0
+    #lastKey = 0
 
     scene.frame_set(start_frame)
     for f in range(start_frame, end_frame + 1):
@@ -32,10 +32,10 @@ def bake_a3da_fov(context:Context):
         #Force evaluate driver (Not sure if really needed)
         context.evaluated_depsgraph_get().update()
 
-        if (target_cam.auth3d_cam.fov != lastKey):        
-            #Insert keyframe on the fov
-            target_cam.keyframe_insert(data_path="auth3d_cam.fov", frame=f)
-        lastKey = target_cam.auth3d_cam.fov
+        #if (target_cam.auth3d_cam.fov != lastKey):        #Not a good way
+        #Insert keyframe on the fov
+        target_cam.keyframe_insert(data_path="auth3d_cam.fov", frame=f)
+        #lastKey = target_cam.auth3d_cam.fov
 
     print("Bake finished")
 
