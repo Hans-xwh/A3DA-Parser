@@ -15,7 +15,10 @@ from datetime import datetime
 def write_a3da(path:Path, hrcList:list[HrcObject]=None, objList:list[A3daObject]=None, cam:tuple[A3daCamera, A3daCamObj,A3daCamObj:None]=None, use_raw=True) -> bool:
     print("Writing A3DA...")
     now = datetime.now()
-    #path = Path(out)
+
+    if path.suffix not in ('.a3da', '.A3DA'):
+        path = path.with_suffix(".a3da")
+
     file_name = path.name
     a3da = path.open('w', newline="\n")
  

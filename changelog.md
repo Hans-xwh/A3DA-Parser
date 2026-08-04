@@ -3,6 +3,7 @@
 ## [Unreleased]   
 - Fixed camera export crashing on cameras without every property animated 
 - Fixed export always writing raw_data for *fov* & *roll* 
+- Fixed exporter writing with non `a3da` file extension 
 
 ## 1.0.24
 - Fixed priority of uid_name for object export  
