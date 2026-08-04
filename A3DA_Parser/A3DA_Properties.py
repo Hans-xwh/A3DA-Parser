@@ -34,12 +34,13 @@ class auth3dProps(PropertyGroup):
         default=""
     )
 
-    visibility : IntProperty( #type:ignore
+    visibility : FloatProperty( #type:ignore
         name = "Visibility",
         description= "Show or hide an object",
         default= 1,
         min = 0,
-        max = 1
+        max = 1,
+        step = 100
     )
 
 
