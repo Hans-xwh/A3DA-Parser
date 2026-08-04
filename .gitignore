@@ -4,6 +4,7 @@ __pycache__/
 *.blend1
 *.blend@
 *.zip
+*.ini
 
 #I keep a copy of these files in the addon folder so they get included in builds.
 A3DA_Parser/LICENSE

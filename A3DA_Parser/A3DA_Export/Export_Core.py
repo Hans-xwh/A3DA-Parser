@@ -68,6 +68,10 @@ def get_channel_raw(prefix:str, channel:A3daChannel) -> list[str]:
     lines:list[str] = []
     max = -1
 
+    #Return lines if length is < 3
+    if len(channel.keys) <= 2:
+        return get_channel_lines(prefix, channel)
+
     #Decide key value type
     if channel.interpolation == 3:
         kv_type = 3

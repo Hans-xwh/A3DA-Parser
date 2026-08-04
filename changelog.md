@@ -1,7 +1,8 @@
 # Changelog
 
 ## [Unreleased]   
-
+- Fixed camera export crashing on cameras without every property animated 
+- Fixed export always writing raw_data for *fov* & *roll* 
 
 ## 1.0.24
 - Fixed priority of uid_name for object export  

@@ -38,21 +38,22 @@ def build_cam(bl_cam:bpy.types.Object) -> tuple[A3daCamera, A3daCamObj, A3daCamO
     for obj in {cam.interest, cam.view_point, dof, root}:
         if obj is None: continue
 
-        ## Get channelbag and shit ##
-        channelbag = getChannelbag(obj.bl_reference)
+        ## Get channelbag and stuff ##
+        channelbag:bpy.types.ActionChannelbag = getChannelbag(obj.bl_reference)
 
         for transform in ('location', 'rotation_euler', 'scale'):
             for axis in ('x', 'y', 'z'):
                 channel = obj.getTransform(channel=transform, axis=axis)
+
+                if not channelbag or not channelbag.fcurves: continue   #Leaves objects with no animation with empty channels
                 channel.fromFCurve(channelbag.fcurves.find(transform, index=switchAxis(axis)),
                                    correct_rot= not obj.bl_reference.parent and (transform == 'rotation_euler' and axis == 'x'))
         
         #Camera properties
         cam_chbg = getChannelbag(cam.bl_camera)
-        cam.roll.fromFCurve(cam_chbg.fcurves.find('rotation_euler', index=2))
-        cam.fov.fromFCurve(cam_chbg.fcurves.find('auth3d_cam.fov'))
-
-
+        if channelbag and channelbag.fcurves:
+            cam.roll.fromFCurve(cam_chbg.fcurves.find('rotation_euler', index=2))
+            cam.fov.fromFCurve(cam_chbg.fcurves.find('auth3d_cam.fov'))
 
     return cam, root, dof
 
@@ -64,11 +65,16 @@ def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a
     interest = a3da_cam.interest
     viewpoint = a3da_cam.view_point
 
+    if use_raw:
+        get_channel = get_channel_raw
+    else:
+        get_channel = get_channel_lines
+
 
     #Interest transforms
     for transform in ('rot', 'scale', 'trans'): #In this order
         a3da.write("\n".join(
-            get_transform_lines(f'{interest_prefix}.{transform}', interest.getTransform(transform), raw=use_raw )
+            get_transform_lines(f'{interest_prefix}.{transform}', interest.getTransform(transform), raw=use_raw, safe=(transform == 'scale') )
         ) + "\n")
 
     a3da.write(f'{interest_prefix}.visibility.type=1\n')
@@ -78,7 +84,7 @@ def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a
     root_obj = a3da_root if a3da_root else A3daCamObj()
     for transform in ('rot', 'scale', 'trans'):
         a3da.write("\n".join(
-            get_transform_lines(f'camera_root.0.{transform}', root_obj.getTransform(transform), raw=use_raw, safe=(transform == 'scale'))   #Use an empty object. Not really sure if diva can use an animated root
+            get_transform_lines(f'camera_root.0.{transform}', root_obj.getTransform(transform), raw=use_raw, safe=(transform == 'scale'))   #Not really sure if diva can use an animated root (YES IT CAN)
         ) + "\n")
 
     #Viewpoint stuff
@@ -86,26 +92,24 @@ def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a
 
     #fov
     a3da.write("\n".join(
-        get_channel_raw(f'{viewpoint_prefix}.fov', a3da_cam.fov) if use_raw else get_channel_lines(f'{viewpoint_prefix}.fov', a3da_cam.fov)
+        #get_channel_raw(f'{viewpoint_prefix}.fov', a3da_cam.fov) if use_raw else get_channel_lines(f'{viewpoint_prefix}.fov', a3da_cam.fov)
+        get_channel(f'{viewpoint_prefix}.fov', a3da_cam.fov)
     ) + "\n")
 
     a3da.write('camera_root.0.view_point.fov_is_horizontal=1\n')
 
     #roll
     a3da.write("\n".join(
-        get_channel_raw(f'{viewpoint_prefix}.roll', a3da_cam.roll) if use_raw else get_channel_lines(f'{viewpoint_prefix}.roll', a3da_cam.roll)
+        #get_channel_raw(f'{viewpoint_prefix}.roll', a3da_cam.roll) if use_raw else get_channel_lines(f'{viewpoint_prefix}.roll', a3da_cam.roll)
+        get_channel(f'{viewpoint_prefix}.roll', a3da_cam.roll)
     ) + "\n")
 
     #Interest transforms
     for transform in ('rot', 'scale', 'trans'): #In this order
         a3da.write("\n".join(
-            get_transform_lines(f'{viewpoint_prefix}.{transform}', viewpoint.getTransform(transform), raw=use_raw )
+            get_transform_lines(f'{viewpoint_prefix}.{transform}', viewpoint.getTransform(transform), raw=use_raw, safe=(transform == 'scale'))
         ) + "\n")
-
-    ##translation
-    #a3da.write("\n".join(
-    #    get_transform_lines(f'{viewpoint_prefix}.trans', viewpoint.translation, raw=use_raw)
-    #) + "\n")
+    
 
     #viewpoint visibility, tho not used
     a3da.write(f'{viewpoint_prefix}.visibility.type=1\n')
