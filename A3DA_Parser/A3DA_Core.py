@@ -84,6 +84,8 @@ class A3daKeyframe: #Simple a3da frame, with two slopes
 
         return txt
 
+    def copy(self): #Returns a copy of itself
+        return A3daKeyframe(self.frame, self.value, self.Slope1, self.Slope2)
 
     def __iter__(self):
         return iter((self.frame, self.value, self.Slope1, self.Slope2))
@@ -123,6 +125,12 @@ class A3daChannel:
         kp:bpy.types.Keyframe
         last_kp:bpy.types.Keyframe | None = None
         for kp in fcurve.keyframe_points:
+            #Decide if insert a keyframe to emulate constant
+            if last_kp and last_kp.interpolation == 'CONSTANT' and self.interpolation != 4:
+                self.keys[count] = self.keys[count-1].copy()  #Copy of the last keyframe
+                self.keys[count].frame = kp.co.x
+                count += 1
+
             self.keys[count] = A3daKeyframe()
             k2x, k2y = kp.co.x, kp.co.y
             if correct_rot: 
@@ -148,19 +156,18 @@ class A3daChannel:
             self.keys[count].value = y2 
             self.keys[count].Slope1 = s2    #IDK if this is correct
 
-            #Upadte last key
             if last_kp:
                 self.keys[count-1].Slope2 = s1
 
-
-            last_kp = kp
-            count += 1
-
-            #Decide interpolation type
-            if kp.interpolation == 'LINEAR' and self.interpolation < 2:
+            #Decide interpolation type (Linear Bezier)
+            if kp.interpolation in ('LINEAR', 'CONSTANT') and self.interpolation < 2:
                 self.interpolation = 2
             elif kp.interpolation == 'BEZIER' and self.interpolation < 3:
-                self.interpolation = 3
+                self.interpolation = 3                
+
+            #Upadte last key
+            last_kp = kp
+            count += 1
 
         #Cleanup interpolation type if only one key
         if count == 1:
