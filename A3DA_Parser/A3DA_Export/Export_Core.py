@@ -164,3 +164,29 @@ def get_transform_lines(prefix:str, transform:A3daTransform, safe=False, raw=Fal
         )
 
     return lines
+
+def get_channel_auto(prefix:str, channel:A3daChannel, safe=False, raw=False) -> list[str]:
+    #Handles keycount aware choice between raw_data, lines, or type=1 value=1
+
+    if len(channel.keys) == 0:
+        lines:list[str] = []
+
+        if safe:
+            lines.append(f'{prefix}.type=1')
+            lines.append(f'{prefix}.value=1')
+        else:
+            lines.append(f'{prefix}.x.type=0')
+
+        return lines
+
+    elif len(channel.keys) <= 2 or not raw:
+        return get_channel_lines(
+            prefix= f'{prefix}',
+            channel= channel
+        )
+
+    else:   #raw_data
+        return get_channel_raw(
+            prefix= f'{prefix}',
+            channel= channel
+        )
