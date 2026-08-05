@@ -117,7 +117,8 @@ class A3daChannel:
             if safe:
                 self.interpolation = 1
                 self.keys[0] = A3daKeyframe(0, 1, 0, 0)
-            self.interpolation = 0
+            else:
+                self.interpolation = 0
             return
         
         #Convert & save keyframe loop
@@ -134,7 +135,7 @@ class A3daChannel:
             self.keys[count] = A3daKeyframe()
             k2x, k2y = kp.co.x, kp.co.y
             if correct_rot: 
-                k2y = round(k2y - 1.570796)  #90d in radians
+                k2y = round(k2y - 1.570796, 6)  #90d in radians
 
             if last_kp:
                 k1x, k1y = last_kp.co.x, last_kp.co.y
@@ -170,7 +171,8 @@ class A3daChannel:
             count += 1
 
         #Cleanup interpolation type if only one key
-        if count == 1:
+        #if count == 1:
+        if len(fcurve.keyframe_points) == 1:
             self.interpolation = 1
 
         #Set ep types

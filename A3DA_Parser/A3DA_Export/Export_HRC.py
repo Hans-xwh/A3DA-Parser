@@ -1,5 +1,6 @@
 # Copyright (C) 2026 Hans_Xwh - Licensed under GPL v3.
 
+from .. A3DA_Core import getChannelbag, switchAxis
 from .. A3DA_Import.A3DA_HRC import HrcObject, HrcNode
 from . Export_Core import get_transform_lines, get_channel_lines, get_channel_raw
 
@@ -34,18 +35,7 @@ def build_hrc(op:bpy.types.Operator, arm:bpy.types.Object) -> HrcObject:
     hrc.uid_name = arm.auth3d.uid_name
 
     #Get anim refs
-    anim_data = arm.animation_data
-    if not anim_data or not anim_data.action:
-        op.report({'ERROR'}, message="Armature has no anim")
-        return
-    
-    action = anim_data.action
-    action_slot = anim_data.action_slot
-
-    channelbag = action.layers[0].strips[0].channelbag(action_slot)
-    if not channelbag:
-        op.report({'ERROR'}, message="Armature has no anim")
-        return
+    channelbag = getChannelbag(arm)
     
     bone_mapping:dict[str, int] = {}
     node_id = 0
@@ -58,25 +48,24 @@ def build_hrc(op:bpy.types.Operator, arm:bpy.types.Object) -> HrcObject:
         node = HrcNode(Id=node_id, Name=bone.name)
         hrc.nodes[node_id] = node
         bone_mapping[bone.name] = node_id   #This is used later to find id per name
+        node_id += 1
 
         ## Read anim ##
-        #TODO optimize this
-        # translation #
-        node.translation.x.fromFCurve(channelbag.fcurves.find(f'{prefix}.location', index=0))
-        node.translation.y.fromFCurve(channelbag.fcurves.find(f'{prefix}.location', index=1))
-        node.translation.z.fromFCurve(channelbag.fcurves.find(f'{prefix}.location', index=2))
+        if channelbag: 
+            #Transforms
+            for transform in ('location', 'rotation_euler', 'scale'):
+                for axis in ('x', 'y', 'z'):
+                    channel = node.getTransform(transform, axis)
+                    channel.fromFCurve(channelbag.fcurves.find(f'{prefix}.{transform}', index = switchAxis(axis)))
 
-        # rotation #
-        node.rotation.x.fromFCurve(channelbag.fcurves.find(f'{prefix}.rotation_euler', index=0))
-        node.rotation.y.fromFCurve(channelbag.fcurves.find(f'{prefix}.rotation_euler', index=1))
-        node.rotation.z.fromFCurve(channelbag.fcurves.find(f'{prefix}.rotation_euler', index=2))
-
-        # scale #
-        node.scale.x.fromFCurve(channelbag.fcurves.find(f'{prefix}.scale', index=0), safe=True)
-        node.scale.y.fromFCurve(channelbag.fcurves.find(f'{prefix}.scale', index=1), safe=True)
-        node.scale.z.fromFCurve(channelbag.fcurves.find(f'{prefix}.scale', index=2), safe=True)
-
-        node_id += 1
+            #Visibility
+            #TODO implement visibility for bones.
+            #I wrote this but fortgot never added the prop to bones in Blender XDDD
+            #node.visibility.fromFCurve(channelbag.fcurves.find(f'{prefix}.auth3d.visibility'))
+            
+        else:
+            continue
+        
 
     #Now that all nodes are created, set parenting & any other property required
     for bone in sorted_bones:
@@ -88,6 +77,7 @@ def build_hrc(op:bpy.types.Operator, arm:bpy.types.Object) -> HrcObject:
 
         node = hrc.nodes[node_id]
         node.parent = parent_id
+
 
     print("Finished building HRC")
     return hrc
