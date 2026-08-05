@@ -8,6 +8,8 @@
 - Changed visibility driver expression  
 - Added object visibility export 
 - Fixed export of keyframes with constant interpolation 
+- Clean up View Panel. Now properties are hidden for non-Auth3D objects 
+- Fixed reading of type=0 channels for visibility 
 
 
 ## 1.0.24

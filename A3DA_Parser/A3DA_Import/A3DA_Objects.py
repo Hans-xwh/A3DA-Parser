@@ -451,6 +451,8 @@ def parseA3daObject(obj:A3daObject, params:list[str], data:str, frameOffset=0, c
     elif params[2] == 'visibility' and config.use_visibility:
         if params[3] == 'type':
             obj.setParam(params[2], interpolation=data)
+            if data == '0':
+                obj.pushKey(params[2], params[3], keyIndex=0, keyframe=A3daKeyframe(frame=frameOffset))
 
         elif params[3] == 'key' and params[4] != 'length' and params[5] == 'data':
             obj.pushKey(

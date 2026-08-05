@@ -30,26 +30,22 @@ class A3DA_PT_view_panel(Panel):
         return context.active_object #and context.active_object.auth3d.is_auth3d  
 
     def draw(self, context):
-        show_all = True
+        show_always = False     #Toggle on this to always show Auth3D properties. Useful for debugging.
         layout = self.layout
         #layout.label(text="This is a dev panel!")
         col = layout.column()
 
         col.label(text=f"Object: {context.active_object.name}")
-        
-        if show_all == True:
-            col.prop(context.active_object.auth3d, "auth3d_type", text="Type")
-        else:
-            col.label(text=f"Type: {context.active_object.auth3d.auth3d_type}")
+        col.prop(context.active_object.auth3d, "auth3d_type", text="Type")
 
         col.separator()
 
-        if context.active_object.auth3d.auth3d_type != 'CAMERA':
+        if context.active_object.auth3d.auth3d_type in ('OBJECT', 'HRC', 'M_HRC') or show_always:
             col.prop(context.active_object.auth3d, "uid_name", text="Uid")
             col.prop(context.active_object.auth3d, "visibility", text="Visibility")
 
         if context.active_object.auth3d.auth3d_type == 'CAMERA':
-            draw_cam(context, layout, show_all)
+            draw_cam(context, layout)
 
 class A3DA_PT_edit_utils_panel(Panel):
     bl_label = "Auth3D Manipulation Utils"
@@ -70,11 +66,9 @@ class A3DA_PT_edit_utils_panel(Panel):
         #col.operator("a3da_edit.convert_cam", icon='CAMERA_DATA')
 
 
-def draw_cam(context:bpy.types.Context, layout:bpy.types.UILayout, show_all=False):
-    if show_all:
-        layout.prop(context.active_object.auth3d_cam, "subtype", text="Subtype")
-    else:
-        layout.label(text=f"Subtype: {context.active_object.auth3d_cam.subtype}")
+def draw_cam(context:bpy.types.Context, layout:bpy.types.UILayout):
+    layout.prop(context.active_object.auth3d_cam, "subtype", text="Subtype")
+    #layout.label(text=f"Subtype: {context.active_object.auth3d_cam.subtype}")
 
     if context.active_object.auth3d_cam.subtype == 'CAM':
         layout.prop(context.active_object.auth3d_cam, "fov", text="FOV")
