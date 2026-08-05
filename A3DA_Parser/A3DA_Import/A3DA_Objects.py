@@ -355,14 +355,14 @@ def animateObject(obj:A3daObject=None, config:ImportConfig=None):
                     source_prop= visibility_prop,
                     target= mesh,
                     target_prop= 'hide_viewport',
-                    expression= '(var <= 0.999)',
+                    expression= '(var < 0.999)',
                 )
                 createObjDriver(
                     source= ctrl,
                     source_prop= visibility_prop,
                     target= mesh,
                     target_prop= 'hide_render',
-                    expression= '(var <= 0.999)',
+                    expression= '(var < 0.999)',
                 )
         elif config.inherit_visibility:
             for mesh in findChildrenMesh(ctrl):
@@ -371,14 +371,14 @@ def animateObject(obj:A3daObject=None, config:ImportConfig=None):
                     source_prop= visibility_prop,
                     target= mesh,
                     target_prop= 'hide_viewport',
-                    expression= '<= 0.999',
+                    expression= '< 0.999',
                 )
                 additionObjDriver(
                     source= ctrl,
                     source_prop= visibility_prop,
                     target= mesh,
                     target_prop= 'hide_render',
-                    expression= '<= 0.999',
+                    expression= '< 0.999',
                 )
 
     ## Write morphs ##

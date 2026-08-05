@@ -95,10 +95,10 @@ class A3DA_Utils_OT_VisibilityEditor(bpy.types.Operator):
                     if obj == active or obj.type not in {'MESH'}: continue
                     createObjDriver(active, data_path, obj,
                                     target_prop='hide_viewport',
-                                    expression='(var <= 0.999)')
+                                    expression='(var < 0.999)')
                     createObjDriver(active, data_path, obj,
                                     target_prop='hide_render',
-                                    expression='(var <= 0.999)')
+                                    expression='(var < 0.999)')
                     modified += 1
             
             else:
@@ -108,10 +108,10 @@ class A3DA_Utils_OT_VisibilityEditor(bpy.types.Operator):
                         if child.type != 'MESH': continue
                         createObjDriver(obj, data_path, child,
                                         target_prop='hide_viewport',
-                                        expression='(var <= 0.999)')
+                                        expression='(var < 0.999)')
                         createObjDriver(obj, data_path, child,
                                         target_prop='hide_render',
-                                        expression='(var <= 0.999)')
+                                        expression='(var < 0.999)')
                         modified += 1
             self.report({'INFO'}, f"Added visibility drivers to {modified} objects.")
 
