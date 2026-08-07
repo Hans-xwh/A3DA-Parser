@@ -2,7 +2,7 @@
 
 from .. A3DA_Core import getChannelbag, switchAxis
 from .. A3DA_Import.A3DA_HRC import HrcObject, HrcNode
-from . Export_Core import get_transform_lines, get_channel_lines, get_channel_raw
+from . Export_Core import get_transform_lines, get_channel_auto
 
 import bpy
 from io import TextIOWrapper
@@ -57,15 +57,11 @@ def build_hrc(op:bpy.types.Operator, arm:bpy.types.Object) -> HrcObject:
                 for axis in ('x', 'y', 'z'):
                     channel = node.getTransform(transform, axis)
                     channel.fromFCurve(channelbag.fcurves.find(f'{prefix}.{transform}', index = switchAxis(axis)))
-
-            #Visibility
-            #TODO implement visibility for bones.
-            #I wrote this but fortgot never added the prop to bones in Blender XDDD
-            #node.visibility.fromFCurve(channelbag.fcurves.find(f'{prefix}.auth3d.visibility'))
-            
         else:
             continue
-        
+
+    #Write visibility to the parent node
+    hrc.nodes[0].visibility.fromFCurve(channelbag.fcurves.find(f'auth3d.visibility'))
 
     #Now that all nodes are created, set parenting & any other property required
     for bone in sorted_bones:
@@ -108,9 +104,10 @@ def write_hrc(a3da:TextIOWrapper, hrcList:list[HrcObject], use_raw=True):
             ) + "\n")
 
             ## Write visibility ##
-            #TODO actually implement this xd
-            a3da.write(f'{nodeline}.visibility.type=1\n')
-            a3da.write(f'{nodeline}.visibility.value=1\n')
+            a3da.write("\n".join(
+                get_channel_auto(f'{nodeline}.visibility', node.visibility, safe=True, raw=use_raw)
+            ) + "\n")
+
 
         ## More HRC data ##
         a3da.write(f'{hrcline}.node.length={len(hrc.nodes)}\n')

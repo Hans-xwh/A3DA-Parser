@@ -11,6 +11,8 @@
 - Clean up View Panel. Now properties are hidden for non-Auth3D objects 
 - Fixed reading of type=0 channels for visibility 
 - Fixed hrc export crashing on armatures with no animation 
+- Added `Convert Camera` button 
+- Added visibility export for HRC 
 
 
 ## 1.0.24
