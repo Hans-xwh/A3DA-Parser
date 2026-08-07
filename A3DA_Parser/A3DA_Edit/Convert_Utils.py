@@ -10,6 +10,7 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
 from mathutils import Vector, Matrix
+import math 
 
 class A3da_Edit_OT_ConvertArmature(Operator):   
     bl_idname = "a3da_edit.convert_armature"
@@ -205,8 +206,8 @@ class A3da_Edit_OT_ConvertCamera(Operator):
         def get_interest_mtrx(cam_matrix:Matrix, distance:float=5.0) -> Matrix:
             return cam_matrix @ Matrix.Translation((0, 0, -distance))  #Offsets the world matrix by distances and thats it
 
-        def localize_world_pos(matrix:Matrix, obj:bpy.types.Object) -> Vector:    #Maybe change matrix to vector???
-            #Returns a location vector in pose space to an object
+        def localize_world_pos(matrix:Matrix, obj:bpy.types.Object) -> Vector:
+            #Returns a location vector in local space to an object
                     
             if obj.parent:
                 return (obj.parent.matrix_world.inverted_safe() @ matrix).translation
@@ -232,6 +233,23 @@ class A3da_Edit_OT_ConvertCamera(Operator):
 
             return #Rule #1: If it works, dont touch it
 
+        def get_fov(cam:bpy.types.Object, scene:bpy.types.Scene) -> float:
+            #Returns whatever focal length the camera has as horizontal FOV
+
+            render = scene.render
+            aspect_x = render.resolution_x * render.pixel_aspect_x
+            aspect_y = render.resolution_y * render.pixel_aspect_y
+            sensor_fit = cam.data.sensor_fit
+
+            if sensor_fit == 'AUTO':
+                sensor_fit = 'HORIZONTAL' if aspect_x >= aspect_y else 'VERTICAL'
+
+            if sensor_fit == 'HORIZONTAL':
+                sensor = cam.data.sensor_width
+            elif sensor_fit == 'VERTICAL':  #WHY IS VERTICAL EVEN A THING
+                sensor = cam.data.sensor_height * (aspect_x / aspect_y)     #This converts the vertical size to it's horizontal equivalent
+
+            return 2 * math.atan(sensor/ (2 * cam.data.lens))               #And this is just focal to fov
 
         ### Converter ###
         org_cam = context.active_object
@@ -259,7 +277,7 @@ class A3da_Edit_OT_ConvertCamera(Operator):
             viewpoint.location = localize_world_pos(cam_wm, viewpoint)
 
             # Set values #
-            camera.auth3d_cam.fov = org_cam.data.angle_x
+            camera.auth3d_cam.fov = get_fov(org_cam, scene)
 
             #UPDATE OBJECTS TO UPDATE TRACKTO MODIFIER
             interest.update_tag()
