@@ -63,7 +63,7 @@ class A3DA_PT_edit_utils_panel(Panel):
         col.operator("a3da_edit.create_cam", icon='VIEW_CAMERA')
         col.operator("a3da_edit.convert_armature", icon='CON_ARMATURE')
         col.operator("a3da_edit.convert_model", icon='MONKEY')
-        #col.operator("a3da_edit.convert_cam", icon='CAMERA_DATA')
+        col.operator("a3da_edit.convert_cam", icon='CAMERA_DATA')
 
 
 def draw_cam(context:bpy.types.Context, layout:bpy.types.UILayout):

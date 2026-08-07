@@ -9,6 +9,8 @@ import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
+from mathutils import Vector, Matrix
+
 class A3da_Edit_OT_ConvertArmature(Operator):   
     bl_idname = "a3da_edit.convert_armature"
     bl_label = "Convert Armature"
@@ -168,11 +170,20 @@ class A3da_Edit_OT_ConvertModel(Operator):
         return {'FINISHED'}
     
 
-class A3da_Edit_OT_ConvertCamera(Operator):     #TODO implement this xd
+class A3da_Edit_OT_ConvertCamera(Operator):
     bl_idname = "a3da_edit.convert_cam"
     bl_label = "Convert Camera"
     bl_description = "Converts selected camera to an Auth3D Camera"
     bl_options = {"REGISTER", "UNDO"}
+
+    offset_distance : bpy.props.FloatProperty(  #type: ignore
+        name="Offset Distance",
+        description="Distance from the camera to the interest point",
+        default=5.0,
+        min=0.25,
+        soft_max=100.0,
+        subtype= "DISTANCE"
+    )
 
     @classmethod
     def poll(cls, context):
@@ -186,17 +197,92 @@ class A3da_Edit_OT_ConvertCamera(Operator):     #TODO implement this xd
 
     def draw(self, context):
         layout = self.layout
+        #layout.use_property_split = True
+
+        layout.prop(self, "offset_distance", text="Interest Distance", )
     
-    def execute(self, context):
+    def execute(self, context): #Time for matrix math fuck yeah
+        def get_interest_mtrx(cam_matrix:Matrix, distance:float=5.0) -> Matrix:
+            return cam_matrix @ Matrix.Translation((0, 0, -distance))  #Offsets the world matrix by distances and thats it
 
+        def localize_world_pos(matrix:Matrix, obj:bpy.types.Object) -> Vector:    #Maybe change matrix to vector???
+            #Returns a location vector in pose space to an object
+                    
+            if obj.parent:
+                return (obj.parent.matrix_world.inverted_safe() @ matrix).translation
+            else:
+                return matrix.translation             
+
+        def apply_cam_rot(org_cam:bpy.types.Object, to_cam:bpy.types.Object):
+            #Copies org_cam's resulting roll rotation onto to_cam by isolating it in view_point local space
+            
+            org_rot_4x4 = org_cam.matrix_world.to_quaternion().to_matrix().to_4x4().copy()
+            org_pos_vec = org_cam.matrix_world.to_translation().copy()
+
+            new_world = org_rot_4x4
+            new_world.translation = org_pos_vec
+
+            #Convert to local space
+            parent_inverse = to_cam.parent.matrix_world.inverted()
+            local_matrix = parent_inverse @ new_world
+
+            #Extract rotation & apply into camera
+            local_rot = local_matrix.to_quaternion().to_euler(to_cam.rotation_mode)
+            to_cam.rotation_euler.z = local_rot.z
+
+            return #Rule #1: If it works, dont touch it
+
+
+        ### Converter ###
+        org_cam = context.active_object
+
+        # Create auth3D rig #
+        a3d_cam = A3DA_Camera.A3daCamera()
+        A3DA_Camera.setupCam(a3d_cam, None, prefix=f'{org_cam.name}_A3DA')
+        A3DA_Camera.setupFovDriver(a3d_cam)
+
+        interest = a3d_cam.interest.bl_reference
+        viewpoint = a3d_cam.view_point.bl_reference
+        camera = a3d_cam.bl_camera
+
+        # Bake anim #
+        org_frame = context.scene.frame_current
+        scene = context.scene
+        scene.frame_set(context.scene.frame_start)
+
+        for frame in range(scene.frame_start, scene.frame_end + 1):
+            scene.frame_set(frame)
+            cam_wm = org_cam.matrix_world.copy()
+
+            # Set matrices #
+            interest.location = localize_world_pos(get_interest_mtrx(cam_wm, self.offset_distance), interest)
+            viewpoint.location = localize_world_pos(cam_wm, viewpoint)
+
+            # Set values #
+            camera.auth3d_cam.fov = org_cam.data.angle_x
+
+            #UPDATE OBJECTS TO UPDATE TRACKTO MODIFIER
+            interest.update_tag()
+            viewpoint.update_tag()
+            context.view_layer.depsgraph.update()
+
+            apply_cam_rot(org_cam, camera)
+
+            # Insert Keyframes #
+            interest.keyframe_insert(data_path="location", frame=frame)
+            viewpoint.keyframe_insert(data_path="location", frame=frame)
+            camera.keyframe_insert(data_path="rotation_euler", index=2, frame=frame)
+            camera.keyframe_insert(data_path="auth3d_cam.fov", frame=frame)
+
+
+        scene.frame_set(org_frame)
         return {"FINISHED"}
-
 
 
 classes = [
     A3da_Edit_OT_ConvertArmature,
     A3da_Edit_OT_ConvertModel,
-    #A3da_Edit_OT_ConvertCamera
+    A3da_Edit_OT_ConvertCamera
 ]
 
 def register():
