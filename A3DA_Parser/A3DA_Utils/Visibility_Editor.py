@@ -103,8 +103,18 @@ class A3DA_Utils_OT_VisibilityEditor(bpy.types.Operator):
             
             else:
                 for obj in context.selected_objects:
-                    if obj.type not in {'EMPTY', 'ARMATURE'}: continue
+                    if obj.type not in {'EMPTY', 'ARMATURE'} or obj.auth3d.auth3d_type == 'MESH_C': continue
+
+                    #Gotta keep in mind an object can have one or more mesh controllers
+                    children:list[bpy.types.Object] = []
                     for child in obj.children:
+                        if child.auth3d.auth3d_type == 'MESH_C':
+                            for mesh in child.children:
+                                children.append(mesh)
+                        else:
+                            children.append(child)
+
+                    for child in children:
                         if child.type != 'MESH': continue
                         createObjDriver(obj, data_path, child,
                                         target_prop='hide_viewport',
@@ -118,11 +128,16 @@ class A3DA_Utils_OT_VisibilityEditor(bpy.types.Operator):
         ### Remove Drivers ###
         elif self.operation == 'REMOVE':
             for obj in context.selected_objects:
-                if obj.type not in {'MESH', 'ARMATURE'}: continue
+                if obj.type not in {'EMPTY', 'ARMATURE'}:   continue
 
-                obj.driver_remove("hide_viewport")
-                obj.driver_remove("hide_render")
-                modified += 1
+                for child in obj.children:
+                    if child.type != 'MESH': continue
+                    child.driver_remove("hide_viewport")
+                    child.driver_remove("hide_render")
+                    child.hide_viewport = False
+                    child.hide_render = False
+
+                    modified += 1
 
             self.report({'INFO'}, f"Removed visibility drivers from {modified} objects")
 
