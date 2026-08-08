@@ -1,19 +1,25 @@
 # Changelog
 
-## [Unreleased]   
+## 1.1.0
+### Added
+- Added `Convert Camera` operator. Converts any camera to a baked Auth3d Camera 
+- Added visibility export for HRC 
+- Added object visibility export 
+
+### Changed 
+- Clean up View Panel. Now properties are hidden for non-Auth3D objects 
+- Changed *Visibility* property from an `IntProperty` to a `FloatProperty` 
+- Changed visibility driver expression 
+
+### Fixed
 - Fixed camera export crashing on cameras without every property animated 
 - Fixed export always writing raw_data for *fov* & *roll* 
 - Fixed exporter writing with non `a3da` file extension 
-- Changed *Visibility* property from an `IntProperty` to a `FloatProperty` 
-- Changed visibility driver expression  
-- Added object visibility export 
 - Fixed export of keyframes with constant interpolation 
-- Clean up View Panel. Now properties are hidden for non-Auth3D objects 
 - Fixed reading of type=0 channels for visibility 
 - Fixed hrc export crashing on armatures with no animation 
-- Added `Convert Camera` button 
-- Added visibility export for HRC 
-
+- Fixed visibility editor not working reliably on imported animation 
+- Fixed import of cameras with raw_data 
 
 ## 1.0.24
 - Fixed priority of uid_name for object export  

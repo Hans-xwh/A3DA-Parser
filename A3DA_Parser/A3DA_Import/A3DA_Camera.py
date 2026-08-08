@@ -292,6 +292,14 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                             interpolation= data
                         )
 
+                    elif params[5] == 'raw_data' and params[6] == 'value_list':
+                        readRawLine(rawBuffer, data)
+    
+                    elif params[5] == 'raw_data_key_type':
+                        channel = camera.view_point.getTransform(params[3], params[4])
+                        parseRawLine(rawBuffer, channel, data)
+                        pass
+
                 #TODO REFACTOR THIS HORRIBLE CODE OMG WHAT WAS I THINKING
                 #It should check the case, save where to write in a var, then decide if raw or keys
                 elif params[3] == 'aspect':   #Static. Idk if it's worth saving this, since for al diva pvs it's always 1.77778
@@ -304,6 +312,12 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                         camera.fov.interpolation = int(data)
                     elif params[4] == 'value':  #Non-key value parsing
                         camera.fov.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
+                    elif params[4] == 'raw_data' and params[5] == 'value_list':
+                        readRawLine(rawBuffer, data)
+                    elif params[4] == 'raw_data_key_type':
+                        parseRawLine(rawBuffer, camera.fov, data)
+                        pass
+                    
 
                 elif params[3] == 'roll':
                     if params[4] == 'key' and params[5] != 'length' and params[6] == 'data':
@@ -311,7 +325,12 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                     elif params[4] == 'type':
                         camera.roll.interpolation = int(data)
                     elif params[4] == 'value':  #Non-key value parsing
-                        camera.fov.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
+                        camera.roll.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
+                    elif params[4] == 'raw_data' and params[5] == 'value_list':
+                        readRawLine(rawBuffer, data)
+                    elif params[4] == 'raw_data_key_type':
+                        parseRawLine(rawBuffer, camera.roll, data)
+                        pass
 
                 elif params[3] == 'fov_is_horizontal':  #Always 1
                     pass
@@ -396,9 +415,8 @@ def startReadingCam(a3da_path:str='', frameOffset:int=0, config:ImportConfig=Non
             params = [itm for itm in params.split('.')]
 
             if params[1] == 'file_name':
-                #a3daName = data.removesuffix('.a3da') + '_'     #This is also the field name
                 a3daName = [itm for itm in data.split('_')]
-                a3daName = a3daName[0]
+                a3daName = a3daName[0].removesuffix('.a3da')
 
                 if not config.use_file_begin: break
 
@@ -413,6 +431,7 @@ def startReadingCam(a3da_path:str='', frameOffset:int=0, config:ImportConfig=Non
         if a3daName == None:
             #a3daName = stgpv + "_EFF_"
             pass
+
     except UnicodeDecodeError as ex:
         print('\nFile read Error')
         print('You likely tried to load an A3DC binary file, but they are not supported by this tool!')
