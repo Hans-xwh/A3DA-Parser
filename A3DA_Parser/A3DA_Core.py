@@ -428,7 +428,10 @@ def setA3daChannel(fcurve:bpy.types.FCurve, channel:A3daChannel, frameOffset:int
 
     #Add modifiers if EP
     if channel.ep_post > 0 or channel.ep_pre > 0:
-        modifier:bpy.types.FModifierCycles = fcurve.modifiers.new(type='CYCLES') #type: ignore Bruh wtf is this a type error
+
+        modifier:bpy.types.FModifierCycles
+        modifier = next((m for m in fcurve.modifiers if m.type == 'CYCLES'), None)  #Tries to get a Cycles modifier, if not create one. Prevents crashes on instances.
+        if not modifier: modifier = fcurve.modifiers.new(type='CYCLES')             #Iswtg next is my new favorite thing
 
         match channel.ep_pre:
             case 0: #No extrapolation

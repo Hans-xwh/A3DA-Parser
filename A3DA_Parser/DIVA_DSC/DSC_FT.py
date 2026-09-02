@@ -39,11 +39,10 @@ def ChangeField_FT(new_field:Field, old_field:Field|None, time:int, a3da_folder:
         new_stage = bpy.context.scene.objects.get(new_field.stage)        
         if not new_stage:
             new_stage = createEmpty(new_field.stage)
-            if config.auto_gnd: #Auto assign stage gnd
-                gnd = bpy.context.scene.objects.get(f'{new_field.stage}_GND')
-                if gnd:
-                    gnd.parent = new_stage
-        #new_stage["IsStage"] = True
+        if config.auto_gnd: #Auto assign stage gnd
+            gnd = bpy.context.scene.objects.get(f'{new_field.stage}_GND')
+            if gnd:
+                gnd.parent = new_stage
 
         #Force load first field
         if config.force_load_first or branch == 2:     #This will add the static stage to the list of objects to import, so it will be loaded. Only on branch 2
