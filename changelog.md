@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+### Fixed
+- Fixed sequential import crashing when objects already had a Cycles modifier
+- Fixed automatic parenting of GND stage parts working unreliably
+
 ## 1.1.0
 ### Added
 - Added `Convert Camera` operator. Converts any camera to a baked Auth3d Camera 
