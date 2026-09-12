@@ -4,6 +4,7 @@ from ..A3DA_Core import ImportConfig
 from .A3DA_Objects import A3daObject, A3daCV, animateObject, assignMesh, assignParent, createEmpty, cleanEmptiesNames, parseA3daObject, parseA3daCurve
 from .A3DA_TexTransform import TexPattern, animateTex, animateTexPat
 from .A3DA_HRC import HrcObject, M_Hrc, parseHrc, animateHrc
+from .A3DA_Light import A3daLight, parseA3daLight, animA3daLight
 
 import bpy
 from array import array
@@ -26,6 +27,7 @@ def readA3da(a3daFile, a3daName, stgpv=None, frameOffset=0, config:ImportConfig=
     hrcObjects:dict[int, HrcObject] = {} #Contains HRC objects. Each one is a new armature
     m_hrcObjects:dict[int, M_Hrc] = {}    #Contains M_HRC objects.
     strandedCurves:dict[int, A3daCV] = {}   #Contains animation curves that aren't attached to an object.
+    lights:dict[int, A3daLight] = {}     #Contains lights!
 
     #### File reading ####
     line:str
@@ -155,18 +157,28 @@ def readA3da(a3daFile, a3daName, stgpv=None, frameOffset=0, config:ImportConfig=
 
                 pass
         
-        ### Read m_object_hrc animation ###
-#        elif params[0] == 'm_objhrc' and config.use_hrc:
-#            if params[1] == 'length':
-#                continue
-#
-#            hrcId = int(params[1])
-#            if hrcId not in m_hrcObjects:
-#                m_hrcObjects[hrcId] = M_Hrc(Id=hrcId)
-#            
-#
-#
-#
+        ### Read light animation ###
+        elif params[0] == 'light':
+            if params[1] == 'length': continue
+
+            lightId = int(params[1])
+            if lightId not in lights:
+                lights[lightId] = A3daLight()   #No id set here
+            light = lights[lightId]
+
+            ## Light stuff #
+            if params[2] == "id":
+                light.id = int(data)
+
+            elif params[2] == "name":
+                light.name = data
+
+            elif params[2] == "type":
+                light.type = data
+
+            else:
+                parseA3daLight(light, params, data, frameOffset, config=config)
+
         ### Read play control settings ###
         elif params[0] == 'play_control':
             if params[1] == 'fps':
@@ -267,6 +279,19 @@ def readA3da(a3daFile, a3daName, stgpv=None, frameOffset=0, config:ImportConfig=
 
     print(f'\n[readA3da] Finished animating objects.')
     print(f'[readA3da] Writing to Blender took: {round(time.time() - objTime, 4)} seconds.\n')
+
+    ### Animate Lights ###
+    for indx, light in lights.items():
+        light_name = a3daName + str(indx)
+
+        ctrl = bpy.context.scene.objects.get(light_name)
+        if not ctrl:
+            ctrl = createEmpty(light_name)
+
+        light.animate(ctrl, config)
+        animA3daLight(light, ctrl, config)
+
+        pass
 
 
 def startReading(a3da_path:Path, frameOffset, config:ImportConfig):

@@ -1,25 +1,26 @@
 # Copyright (C) 2026 Hans_Xwh - Licensed under GPL v3.
 
-from ..A3DA_Core import A3daTransform, A3daChannel, A3daKeyframe, ImportConfig, setA3daChannel, switchAxis, parseA3daKey
+from ..A3DA_Core import A3daBaseObj, A3daTransform, A3daChannel, A3daKeyframe, ImportConfig, setA3daChannel, switchAxis, parseA3daKey
 from .A3DA_TexTransform import TexTranform, TexPattern
 import bpy
 
 ### Classes ###
 
-class A3daObject:
+class A3daObject(A3daBaseObj):
     def __init__(self, Id=0, Name=""):
-        self.id:int = Id
-        self.name:str = Name
+        super().__init__(Id, Name)
+        #self.id:int = Id
+        #self.name:str = Name
         self.uid_name:str = ""
         self.parent:str|None = None
 
         #self.mesh:str = ""
         self.bl_name:str= ""
 
-        self.translation:A3daTransform = A3daTransform()
-        self.rotation:A3daTransform = A3daTransform()
-        self.scale:A3daTransform = A3daTransform()
-        self.visibility:A3daChannel = A3daChannel()
+        #self.translation:A3daTransform = A3daTransform()
+        #self.rotation:A3daTransform = A3daTransform()
+        #self.scale:A3daTransform = A3daTransform()
+        #self.visibility:A3daChannel = A3daChannel()
 
         self.morph:A3daChannel = A3daChannel()
         self.morph_name:str = ""
@@ -27,50 +28,11 @@ class A3daObject:
         self.tex_transform:dict[int, TexTranform] = {}
         self.tex_pat:dict[int, TexPattern] = {}
 
-    def pushKey(self, transform:str, axis:str|int, keyframe:A3daKeyframe, keyIndex:int):
-        keyIndex = int(keyIndex)
-        match transform:
-            case 'trans':
-                self.translation.push(axis, keyframe, keyIndex)
-            case 'rot':
-                self.rotation.push(axis, keyframe, keyIndex)
-            case 'scale':
-                self.scale.push(axis, keyframe, keyIndex)
-            case 'visibility':
-                self.visibility.keys[keyIndex] = keyframe
-            case _:
-                print(f'obj:{self.id} | failed to match transform: {transform}'); 
 
-    def getTransform(self, channel:str, axis:str=None) -> A3daChannel|A3daTransform:
-        transform: A3daTransform = None
+    def getTransform(self, channel, axis = None) -> A3daTransform|A3daChannel:
         match channel:
-            case "trans": transform = self.translation
-            case "location": transform = self.translation
-            case "rot": transform = self.rotation
-            case "rotation_euler": transform = self.rotation
-            case "scale": transform = self.scale
-            case "visibility": return self.visibility
-            case _: print(f'[getTransform] Failed to determine transform {channel}');
-        
-        if axis == None: return transform
-
-        match axis:
-            case "x": return transform.x
-            case "y": return transform.y
-            case "z": return transform.z
-            case _: return transform
-
-    def setParam(self, transform:str, axis:str=None, ep_post:int=None, ep_pre:int=None, interpolation:int=None):    #type: ignore
-        #if isinstance(axis, str):
-        #    axis = switchAxis(axis)
-        tr = self.getTransform(transform, axis)
-
-        if ep_post:
-            tr.ep_post = int(ep_post)
-        if ep_pre:
-            tr.ep_pre = int(ep_pre)
-        if interpolation:
-            tr.interpolation = int(interpolation)
+            case "morph": return self.morph
+            case _: return super().getTransform(channel, axis)
 
     def printAll(self):
         print(f'Translation: {self.translation.x}\n{self.translation.y}\n{self.translation.z}')
@@ -421,53 +383,9 @@ def animateObject(obj:A3daObject=None, config:ImportConfig=None):
 
 def parseA3daObject(obj:A3daObject, params:list[str], data:str, frameOffset=0, config:ImportConfig=None):
     #Params: 1=id, 2=transform, 3=axis, 5=KeyIndex, 6=data/type
-    #Basic object transforms
-    if params[2] in ('trans', 'rot', 'scale'):
-        if params[4] == 'key' and params[5] != 'length' and params[6] == 'data':    #key parsing
-            keyframe = parseA3daKey(data, frameOffset)
-            obj.pushKey(
-                transform= params[2],
-                axis= params[3],
-                keyframe= keyframe,
-                keyIndex= int(params[5])
-            )
-
-        elif params[4] == 'value':  #Non-key value parsing
-            obj.pushKey(params[2], params[3], keyIndex=0,
-                keyframe= parseA3daKey(data, frameOffset, not_key=True))
-        
-        elif params[4] == 'type': #Interpolation mode. type=0 means the transforms is always 0
-            obj.setParam(params[2], params[3], interpolation=data)
-            if data == '0':
-                obj.pushKey(params[2], params[3], keyIndex=0, keyframe=A3daKeyframe(frame=frameOffset))
-
-        elif params[4] == 'ep_type_post': #Extrapolation post mode
-            obj.setParam(params[2], params[3], ep_post=data)
-
-        elif params[4] == 'ep_type_pre': #Extraolation pre mode
-            obj.setParam(params[2], params[3], ep_pre=data)
-
-    #Object Visibility
-    elif params[2] == 'visibility' and config.use_visibility:
-        if params[3] == 'type':
-            obj.setParam(params[2], interpolation=data)
-            if data == '0':
-                obj.pushKey(params[2], params[3], keyIndex=0, keyframe=A3daKeyframe(frame=frameOffset))
-
-        elif params[3] == 'key' and params[4] != 'length' and params[5] == 'data':
-            obj.pushKey(
-                transform= params[2],
-                axis= None,
-                keyIndex= params[4],
-                keyframe= parseA3daKey(data, frameOffset)
-            )
-
-        elif params[3] == 'value':
-            obj.pushKey(transform=params[2], axis=None, keyIndex=0, 
-                keyframe=parseA3daKey(data, frameOffset, not_key=True))
-             
+    #             
     #UV animation
-    elif params[2] == 'tex_transform' and config.use_tex_transform:
+    if params[2] == 'tex_transform' and config.use_tex_transform:
         if params[3] == 'length':
             return
         
@@ -484,33 +402,18 @@ def parseA3daObject(obj:A3daObject, params:list[str], data:str, frameOffset=0, c
         elif params[4] in ('repeatU', 'repeatV', 'translateFrameU', 'translateFrameV', 'rotateFrame', 'offsetV', 'offsetU'):
             if len(params) <= 5:
                 return
-            
-            if params[5] == 'type':
-                tex_t.setParam(params[4], interpolation=data)
 
-            elif params[5] == 'ep_type_post':
-                tex_t.setParam(params[4], ep_post=data)
+            channel = tex_t.getTransform(params[4])
 
-            elif params[5] == 'ep_type_pre':
-                tex_t.setParam(params[4], ep_pre=data)
-            
-            elif params[5] == 'value':
-                tex_t.pushKey(
-                    transform= params[4],
-                    keyIndex= 0,
-                    keyframe= parseA3daKey(data, frameOffset, not_key=True)
-                )
+            if channel: channel.parseA3daLine(params[5:], data, frameOffset)
 
-            elif params[5] == 'key' and params[6] != 'length' and params[7] == 'data':
-                key = parseA3daKey(data, frameOffset)
-                if params[4] in ("offsetU", "offsetV"):     #MGF mode
-                    key.scale(-1)
+    else:
+        if len(params) > 3:
+            channel = obj.getTransform(params[2], params[3])
+        elif len(params) > 2:
+            channel = obj.getTransform(params[2])
 
-                tex_t.pushKey(
-                    transform= params[4],
-                    keyIndex= params[6],
-                    keyframe= key
-                )
+        if channel: channel.parseA3daLine(params[4:], data, frameOffset)
 
     #Object morphs will be handled in main parser func
     #elif params[2] == 'morph'  :

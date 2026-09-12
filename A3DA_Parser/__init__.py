@@ -21,6 +21,7 @@ if "bpy" in locals():
     importlib.reload(A3DA_UI)
     importlib.reload(A3DA_HRC)
     importlib.reload(A3DA_Camera)
+    importlib.reload(A3DA_Light)
 
     importlib.reload(A3DA_Utils)
     importlib.reload(A3DA_Edit)
@@ -33,6 +34,7 @@ else:
     from .A3DA_Import import A3DA_Objects 
     from .A3DA_Import import A3DA_HRC
     from .A3DA_Import import A3DA_Camera
+    from .A3DA_Import import A3DA_Light
 
     #a3da_ui must be imported after the main import functions
     from . import A3DA_UI

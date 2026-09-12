@@ -112,6 +112,32 @@ class A3daChannel:
             key.Slope1 *= scale
             key.Slope2 *= scale
 
+    def parseA3daLine(self, params:list[str], data:str, frameOffset:int):
+        #Feed this starting from type/value/key/etc...
+        #This is the lowest method, should be used to read any channel
+
+        if len(params) <= 0: return
+
+        if params[0] == 'key' and params[1] != 'length' and params[2] == 'data':
+            key_indx = int(params[1])
+            keyframe = parseA3daKey(data, frameOffset)
+
+            self.keys[key_indx] = keyframe
+
+        elif params[0] == 'value':
+            self.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
+
+        elif params[0] == 'type':
+            self.interpolation = int(data)
+            if data == '0':
+                self.keys[0] = A3daKeyframe(frame=frameOffset)
+
+        elif params[0] == 'ep_type_post':
+            self.ep_post = int(data)
+
+        elif params[0] == 'ep_type_pre':
+            self.ep_pre = int(data)
+
     def fromFCurve(self, fcurve:bpy.types.FCurve, safe=False, correct_rot=False):
         if not fcurve:
             if safe:
@@ -235,6 +261,97 @@ class A3daTransform:  #Holds three axes (XYZ) to form a transformation like in B
             self.y.keys[index].value,
             self.z.keys[index].value)
     
+class A3daBaseObj:      #Im gonna have to make all other classes inherit from this xd
+    def __init__(self, Id=0, Name=""):
+        self.id:int = Id
+        self.name:str = Name
+
+        self.translation:A3daTransform = A3daTransform()
+        self.rotation:A3daTransform = A3daTransform()
+        self.scale:A3daTransform = A3daTransform()
+        self.visibility:A3daChannel = A3daChannel()
+
+    def pushKey(self, transform:str, axis:str|int, keyframe:A3daKeyframe, keyIndex:int):
+        keyIndex = int(keyIndex)
+        match transform:
+            case 'trans':
+                self.translation.push(axis, keyframe, keyIndex)
+            case 'rot':
+                self.rotation.push(axis, keyframe, keyIndex)
+            case 'scale':
+                self.scale.push(axis, keyframe, keyIndex)
+            case 'visibility':
+                self.visibility.keys[keyIndex] = keyframe
+            case _:
+                print(f'obj:{self.id} | failed to match transform: {transform}')
+
+    def getTransform(self, channel:str, axis:str=None) -> A3daChannel|A3daTransform:
+        transform: A3daTransform = None
+        match channel:
+            case "trans": transform = self.translation
+            case "location": transform = self.translation
+            case "rot": transform = self.rotation
+            case "rotation_euler": transform = self.rotation
+            case "scale": transform = self.scale
+            case "visibility": return self.visibility
+            case _: print(f'[getTransform] Failed to determine transform {channel}');
+        
+        if axis == None: return transform
+
+        match axis:
+            case "x": return transform.x
+            case "y": return transform.y
+            case "z": return transform.z
+            case _: return transform
+
+    def setParam(self, transform:str, axis:str=None, ep_post:int=None, ep_pre:int=None, interpolation:int=None):    #type: ignore
+        #if isinstance(axis, str):
+        #    axis = switchAxis(axis)
+        tr = self.getTransform(transform, axis)
+
+        if ep_post:
+            tr.ep_post = int(ep_post)
+        if ep_pre:
+            tr.ep_pre = int(ep_pre)
+        if interpolation:
+            tr.interpolation = int(interpolation)
+
+    def parseTransform(self, params:list[str], data:str, frameOffset:int):
+        #Feed this params from transform
+        #0=transform, 1=axis, 2=key/type
+        #Now this should be used to "detect" what to do with a transform line. Idealy overloaded in children to add specific stuff
+
+        if params[0] in ('trans', 'rot', 'scale'):
+            channel = self.getTransform(params[0], params[1])
+            channel.parseA3daLine(params[2:], data, frameOffset)
+
+        else:   #This should catch visibility
+            channel = self.getTransform(params[0])
+            channel.parseA3daLine(params[1:], data, frameOffset)
+            
+    def animate(self, obj:bpy.types.Object, config:ImportConfig=None):
+        action = ensureAction(obj)
+
+        for transform in ('trans', 'rot', 'scale'):
+            for axis in ('x', 'y', 'z'):
+                channel = self.getTransform(transform, axis)
+    
+                #Ensure fcurve exists
+                fcurve = action.fcurve_ensure_for_datablock(    #THANKS FOR THIS FUNCTION
+                    datablock= obj,
+                    data_path= f'{switchAxis(transform)}',
+                    index= switchAxis(axis)
+                )
+    
+                #Write the channel keys to Blender
+                if config and config.force_loops:
+                    channel.ep_post = 2 #Loopy loop
+
+                setA3daChannel(fcurve, channel)
+
+        #No visibility here since only meshes really use it
+
+        
 
 #######################
 ###### Functions ######
