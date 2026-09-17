@@ -493,20 +493,27 @@ def setFcurveKey(fCurve:bpy.types.FCurve, keyframe:A3daKeyframe=None, interpoTyp
     #fCurve.update()
 
 def setA3daChannel(fcurve:bpy.types.FCurve, channel:A3daChannel, frameOffset:int=0, clearAfterImport:bool=False):
-    writePointer = 0
+
+    #total_key_count = len(fcurve.keyframe_points) + len(channel.keys)
+    a3da_key_count = len(channel.keys)
+
+    writePointer = len(fcurve.keyframe_points)
+
+    if writePointer > 0:    #Experimental
+        fcurve.keyframe_points[-1].interpolation = 'CONSTANT'
 
     #Initialize curve by reserving memory for all keys
     fcurve.auto_smoothing = "NONE"
-    fcurve.keyframe_points.add(len(channel.keys))
+    fcurve.keyframe_points.add(a3da_key_count)
 
     #Write all keys
     index = 0
-    while index < len(channel.keys):
+    while index < a3da_key_count:
         interpolation = channel.interpolation
         key = channel.keys[index]
 
         #Key Overwrite Protection
-        if index < len(channel.keys) -1 and key.frame == channel.keys[index + 1].frame: #Check if key will be overwritten by next
+        if index < a3da_key_count -1 and key.frame == channel.keys[index + 1].frame: #Check if key will be overwritten by next
             #if writePointer > 0 and key.value == channel.keys[index - 1].value: #Unsafe
             if writePointer > 0 and abs(key.value - fcurve.keyframe_points[writePointer - 1].co[1]) < 0.001: #Check if not first key, then check if previous and current have the same value. This means last one is a hold
                 fcurve.keyframe_points[writePointer - 1].interpolation = 'CONSTANT' #Make previous key constant
