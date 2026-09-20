@@ -94,6 +94,20 @@ class A3daKeyframe: #Simple a3da frame, with two slopes
         return f"(frame={self.frame}, value={self.value}, s1={self.Slope1}, s2={self.Slope2})"
     
 class A3daChannel:
+    raw_buffer:array = array('d')   #May the python gods have mercy on my soul
+
+    @classmethod
+    def clearBuffer(cls):
+        del cls.raw_buffer[:]
+
+    @classmethod
+    def readRawLine(cls, rawLine:str):  #Reads and separates raw keys in a line
+        data = rawLine.split(',')
+        
+        cls.raw_buffer.extend(
+            map(float, data)
+        )
+
     def __init__(self):
         self.keys:dict[int, A3daKeyframe] = {}
         self.interpolation:int = 0  #0:NoKeys, 1:Single, 2:Linear, 3:SingleSlope, 4:DualSlope
@@ -112,9 +126,50 @@ class A3daChannel:
             key.Slope1 *= scale
             key.Slope2 *= scale
 
+    def parseRawLine(self, keyType:str|int):     #Converts raw buffered data into a3da keyframes
+        #Type 1: frame, value
+        #Type 2: frame, value, slope
+        #Type 3: frame, value, slope1, slope2
+
+        frames = None
+        values = None
+        SlopeIns = None
+        SlopeOuts = None
+
+        ## Decode rawBuffer ##
+        keyType = int(keyType)
+        blockSize = keyType + 1
+
+        if keyType >= 1:
+            frames = self.raw_buffer[0 :: blockSize]
+            values = self.raw_buffer[1 :: blockSize]
+        if keyType >= 2:
+            SlopeIns = self.raw_buffer[2 :: blockSize]
+
+        if keyType >= 3:
+            SlopeOuts = self.raw_buffer[3 :: blockSize]
+        elif SlopeIns:
+            SlopeOuts = SlopeIns
+
+        del self.raw_buffer[:]    #Release buffer memory
+
+        ## Convert to A3da Keyframes ##
+        for i, frame in enumerate(frames):   #Use frames to iterate to everything else. Idk if there's a better way to do this
+            self.keys[i] = A3daKeyframe(
+                frame= frame,
+                value= values[i],
+                s1= SlopeIns[i] if SlopeIns else 0,
+                s2= SlopeOuts[i] if SlopeOuts else 0
+            )
+
+        del frames 
+        del values 
+        del SlopeIns 
+        del SlopeOuts 
+
     def parseA3daLine(self, params:list[str], data:str, frameOffset:int):
         #Feed this starting from type/value/key/etc...
-        #This is the lowest method, should be used to read any channel
+        #This is the lowest level method, should be used to read any channel
 
         if len(params) <= 0: return
 
@@ -137,6 +192,14 @@ class A3daChannel:
 
         elif params[0] == 'ep_type_pre':
             self.ep_pre = int(data)
+
+        elif params[0] == 'raw_data' and params[1] == 'value_list':
+            self.clearBuffer()
+            self.readRawLine(data)
+
+        elif params[0] == 'raw_data_key_type':
+            self.parseRawLine(data)
+            self.clearBuffer()
 
     def fromFCurve(self, fcurve:bpy.types.FCurve, safe=False, correct_rot=False):
         if not fcurve:
@@ -381,10 +444,6 @@ def DapperDots(b1x, b1y, b2x, b2y, b3x, b3y, b4x, b4y) -> tuple: #Converts a Bez
 
     return b1x, b1y, s1, b4x, b4y, s2
 
-
-def kpToA3daKey(kp_last:bpy.types.Keyframe, kp_current:bpy.types.Keyframe) -> A3daKeyframe:
-
-    pass
 
 def switchAxis(value) -> str | int:  #Takes an axis as string and return a number or transform for Blender.
     match value:
