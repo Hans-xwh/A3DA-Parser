@@ -1,25 +1,16 @@
 # Copyright (C) 2026 Hans_Xwh - Licensed under GPL v3.
 
-from ..A3DA_Core import ImportConfig, A3daKeyframe, A3daChannel, A3daTransform, parseA3daKey, setA3daChannel, readRawLine, parseRawLine, ensureAction, switchAxis as CoreSwAx
+from ..A3DA_Core import A3daBaseObj, ImportConfig, A3daKeyframe, A3daChannel, A3daTransform, parseA3daKey, setA3daChannel, parseRawLine, ensureAction, switchAxis as CoreSwAx #,readRawLine
 from .A3DA_Objects import A3daObject, createEmpty, assignParent, createObjDriver
 import bpy
 from array import array
 import time
 
-#class A3daCamObj:   #Dof OBJ can be represented as one of these
-#    def __init__(self):
-#        self.location:A3daTransform = A3daTransform()
-#        self.rotation:A3daTransform = A3daTransform()
-#        self.scale:A3daTransform = A3daTransform()
-#
-#        self.bl_reference:bpy.types.Object | None = None
+#Deez nuts
 
-class A3daCamObj(A3daObject):   #Dof OBJ can be represented as one of these
+class A3daCamObj(A3daBaseObj):   #Dof OBJ can be represented as one of these
     def __init__(self):
-        self.translation:A3daTransform = A3daTransform()
-        self.rotation:A3daTransform = A3daTransform()
-        self.scale:A3daTransform = A3daTransform()
-        self.visibility:A3daChannel = A3daChannel()
+        super().__init__()
 
         self.bl_reference:bpy.types.Object | None = None
 
@@ -77,6 +68,8 @@ def switchAxis(value):
 
 #### Camera working functions ####
 def setupCam(camera:A3daCamera=None, dof:A3daCamObj=None, prefix:str=''):
+    if prefix is None: prefix = ''
+    
     if prefix != '':
         camName = prefix
         prefix  += ' - '
@@ -252,85 +245,22 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                 camera = A3daCamera(camId)
                 cameras[camId] = camera
 
-            if params[2] == 'interest' and params[3] != 'visibility':
-                if params[5] == 'key' and params[6] != 'length' and 'data' in params:
-                    camera.interest.pushKey(
-                        transform=params[3],
-                        axis= params[4],
-                        keyIndex= params[6],
-                        keyframe= parseA3daKey(data, frameOffset)
-                    )
-                    
-                elif params[5] == 'type':
-                    camera.interest.setParam(
-                        transform=params[3],
-                        axis= params[4],
-                        interpolation= data
-                    )
-
-                elif params[5] == 'raw_data' and params[6] == 'value_list':
-                    readRawLine(rawBuffer, data)
-
-                elif params[5] == 'raw_data_key_type':
-                    channel = camera.interest.getTransform(params[3], params[4])
-                    parseRawLine(rawBuffer, channel, data)
-                    pass
+            if params[2] == 'interest':
+                camera.interest.parseTransform(params[3:], data, frameOffset)
 
             elif params[2] == 'view_point':
-                if params[3] in ('trans', 'rot', 'scale'):
-                    if params[5] == 'key' and params[6] != 'length' and params[7] == 'data':
-                        camera.view_point.pushKey(
-                            transform= params[3],
-                            axis = params[4],
-                            keyIndex= params[6],
-                            keyframe= parseA3daKey(data, frameOffset)
-                        )
-                    elif params[5] == 'type':
-                        camera.view_point.setParam(
-                            transform= params[3],
-                            axis= params[4],
-                            interpolation= data
-                        )
-
-                    elif params[5] == 'raw_data' and params[6] == 'value_list':
-                        readRawLine(rawBuffer, data)
-    
-                    elif params[5] == 'raw_data_key_type':
-                        channel = camera.view_point.getTransform(params[3], params[4])
-                        parseRawLine(rawBuffer, channel, data)
-                        pass
-
-                #TODO REFACTOR THIS HORRIBLE CODE OMG WHAT WAS I THINKING
-                #It should check the case, save where to write in a var, then decide if raw or keys
+                if params[3] in {"trans", "rot", "scale", "visibility"}:
+                    camera.view_point.parseTransform(params[3:], data, frameOffset)
+             
                 elif params[3] == 'aspect':   #Static. Idk if it's worth saving this, since for al diva pvs it's always 1.77778
                     camera.aspect = float(data)
 
                 elif params[3] == 'fov':
-                    if params[4] == 'key' and params[5] != 'length' and params[6] == 'data':
-                        camera.fov.keys[int(params[5])] = parseA3daKey(data, frameOffset)
-                    elif params[4] == 'type':
-                        camera.fov.interpolation = int(data)
-                    elif params[4] == 'value':  #Non-key value parsing
-                        camera.fov.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
-                    elif params[4] == 'raw_data' and params[5] == 'value_list':
-                        readRawLine(rawBuffer, data)
-                    elif params[4] == 'raw_data_key_type':
-                        parseRawLine(rawBuffer, camera.fov, data)
-                        pass
-                    
+                    camera.fov.parseA3daLine(params[4:], data, frameOffset)                    
 
                 elif params[3] == 'roll':
-                    if params[4] == 'key' and params[5] != 'length' and params[6] == 'data':
-                        camera.roll.keys[int(params[5])] = parseA3daKey(data, frameOffset)
-                    elif params[4] == 'type':
-                        camera.roll.interpolation = int(data)
-                    elif params[4] == 'value':  #Non-key value parsing
-                        camera.roll.keys[0] = parseA3daKey(data, frameOffset, not_key=True)
-                    elif params[4] == 'raw_data' and params[5] == 'value_list':
-                        readRawLine(rawBuffer, data)
-                    elif params[4] == 'raw_data_key_type':
-                        parseRawLine(rawBuffer, camera.roll, data)
-                        pass
+                    camera.roll.parseA3daLine(params[4:], data, frameOffset)
+
 
                 elif params[3] == 'fov_is_horizontal':  #Always 1
                     pass
@@ -342,35 +272,14 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                     camera.width = float(data)
 
                 elif params[3] == 'focal_length':  #MGF     #Then animate this in mm.
-                    if params[4] == 'key' and params[5] != 'length' and params[6] == 'data':
-                        camera.focal_length.keys[int(params[5])] = parseA3daKey(data, frameOffset)
-                    elif params[4] == 'type':
-                        camera.focal_length.interpolation = int(data)
+                    camera.focal_length.parseA3daLine(params[4:], data, frameOffset)
 
-        elif params[0] == 'dof' and config.use_dof:
-            if params[1] in ('trans', 'rot', 'scale'):
-                has_dof = True
-                channel = dof.getTransform(
-                    channel= params[1],
-                    axis= params[2])
+            else:       #TODO: Root reading
+                pass
 
-                if params[3] == 'key' and params[4] != 'length' and params[5] == 'data':  #Regular keys
-                    keyIndex = int(params[4])
-                    channel.keys[keyIndex] = parseA3daKey(data, frameOffset)
-
-                elif params[3] == 'value':  #Non-key value parsing
-                    kframe = parseA3daKey(data, frameOffset, not_key=True)
-                    channel.keys[0] = kframe
-
-                elif params[3] == 'type':   #Interpolation mode
-                    channel.interpolation = int(data)
-
-                elif params[3] == 'raw_data' and params[4] == 'value_list':     #Raw key data buffering
-                    readRawLine(rawBuffer, data)
-
-                elif params[3] == 'raw_data_key_type':  #Raw data resolving
-                    parseRawLine(rawBuffer, channel, data)
-            pass
+        elif params[0] == 'dof' and config.use_dof and len(params) > 2:
+            has_dof = True
+            dof.parseTransform(params[1:], data, frameOffset)
 
         ### Read play control settings ###
         elif params[0] == 'play_control':
