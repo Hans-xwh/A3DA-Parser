@@ -127,8 +127,8 @@ class A3DA_OT_export_Cam(Export_BASE):
             path /= "cam.a3da"
 
         selected = context.active_object
-        a3da_cam, a3da_root, a3da_dof = Export_Camera.build_cam(selected)
-        Export_Writer.write_a3da(path, cam=(a3da_cam, a3da_root, a3da_dof), use_raw=self.use_raw)
+        a3da_cam, a3da_dof = Export_Camera.build_cam(selected)
+        Export_Writer.write_a3da(path, cam=(a3da_cam, a3da_dof), use_raw=self.use_raw)
 
         self.report({'INFO'}, f"A3DA saved to: {path}")
         return {'FINISHED'}

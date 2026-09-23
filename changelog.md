@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+- A lot of internal refactoring 
+- Fixed import of sequential files for the same object overwriting previously placed keyframes 
+- Fixed exported camera DOF having invalid visibility 
+- Camera & object import now support raw_data for all properties.
+- Code cleanup on camera import & export
+
 ## 1.1.1
 ### Fixed
 - Fixed sequential import crashing when objects already had a Cycles modifier

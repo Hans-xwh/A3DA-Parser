@@ -1,9 +1,8 @@
 # Copyright (C) 2026 Hans_Xwh - Licensed under GPL v3.
 
-from ..A3DA_Core import A3daBaseObj, ImportConfig, A3daKeyframe, A3daChannel, A3daTransform, parseA3daKey, setA3daChannel, parseRawLine, ensureAction, switchAxis as CoreSwAx #,readRawLine
-from .A3DA_Objects import A3daObject, createEmpty, assignParent, createObjDriver
+from ..A3DA_Core import A3daBaseObj, ImportConfig, A3daKeyframe, A3daChannel, setA3daChannel, ensureAction, switchAxis as CoreSwAx
+from .A3DA_Objects import createEmpty, assignParent, createObjDriver
 import bpy
-from array import array
 import time
 
 #Deez nuts
@@ -17,11 +16,13 @@ class A3daCamObj(A3daBaseObj):   #Dof OBJ can be represented as one of these
     def __repr__(self):
         return f'Blender obj: {self.bl_reference.name}'
 
-class A3daCamera:
+class A3daCamera(A3daBaseObj):
     def __init__(self, id:int=0): 
-        self.id:int = id
+        super().__init__(Id=id)
+        #self.id:int = id
         self.interest:A3daCamObj = A3daCamObj()
         self.view_point:A3daCamObj = A3daCamObj()
+        self.root:A3daCamObj = A3daCamObj()
 
         self.roll:A3daChannel = A3daChannel()
         self.fov:A3daChannel = A3daChannel()            #DIVA in radians
@@ -33,8 +34,8 @@ class A3daCamera:
         self.width:float = 0.0
         #width/height = aspect
 
-        self.bl_camera:bpy.types.Object | None = None
-        self.bl_root:bpy.types.Object | None = None
+        self.bl_camera:bpy.types.Object
+        #self.bl_root:bpy.types.Object | None = None
 
     def pushKey(self, target:str, transform:str, keyframe:A3daKeyframe, keyIndex:int, axis:str=None):
         keyIndex = int(keyIndex)
@@ -87,22 +88,22 @@ def setupCam(camera:A3daCamera=None, dof:A3daCamObj=None, prefix:str=''):
         camera.bl_camera = bpy.data.objects.new(camName, camData)
         bpy.context.scene.collection.objects.link(camera.bl_camera)
 
-    camera.bl_root = createEmpty(prefix + 'Root')
+    camera.root.bl_reference = createEmpty(prefix + 'Root')
     camera.view_point.bl_reference = createEmpty(prefix + 'ViewPoint')
     camera.interest.bl_reference = createEmpty(prefix + 'Interest')
 
     camera.bl_camera.auth3d_cam.subtype = 'CAM'
     camera.bl_camera.auth3d.auth3d_type = 'CAMERA'
-    camera.bl_root.auth3d.auth3d_type = 'CAMERA'
-    camera.bl_root.auth3d_cam.subtype = 'ROOT'
+    camera.root.bl_reference.auth3d.auth3d_type = 'CAMERA'
+    camera.root.bl_reference.auth3d_cam.subtype = 'ROOT'
     camera.view_point.bl_reference.auth3d.auth3d_type = 'CAMERA'
     camera.view_point.bl_reference.auth3d_cam.subtype = 'VIEW'
     camera.interest.bl_reference.auth3d.auth3d_type = 'CAMERA'
     camera.interest.bl_reference.auth3d_cam.subtype = 'INTEREST'
 
     #set parenting
-    assignParent(camera.bl_root, camera.interest.bl_reference)
-    assignParent(camera.bl_root, camera.view_point.bl_reference)
+    assignParent(camera.root.bl_reference, camera.interest.bl_reference)
+    assignParent(camera.root.bl_reference, camera.view_point.bl_reference)
     assignParent(camera.view_point.bl_reference, camera.bl_camera)
 
     #Set constraint
@@ -110,12 +111,13 @@ def setupCam(camera:A3daCamera=None, dof:A3daCamObj=None, prefix:str=''):
     track_to.target = camera.interest.bl_reference
 
     #Rotate root
-    camera.bl_root.rotation_euler.x = 1.570796  #90 degrees
+    camera.root.bl_reference.rotation_euler.x = 1.570796  #90 degrees
+    #TODO Make a better wat to do this
 
 
     if dof and camera.id == 0:
         dof.bl_reference = createEmpty(prefix + 'DOF')  #I dont really know what to do with the dof object so it'll just exist there
-        assignParent(camera.bl_root, dof.bl_reference)
+        assignParent(camera.root.bl_reference, dof.bl_reference)
         dof.bl_reference.auth3d.auth3d_type = 'CAMERA'
         dof.bl_reference.auth3d_cam.subtype = 'DOF'
 
@@ -177,6 +179,7 @@ def animateCam(camera:A3daCamera=None, dof:A3daCamObj=None, config:ImportConfig=
     #Animate interes and viewpoint
     animateCamObj(camera.interest)
     animateCamObj(camera.view_point)
+    #animateCamObj(camera.root)     #Sorry no root anim for now
 
     #Ensure camera and write roll
     cam_action = ensureAction(camera.bl_camera)
@@ -219,7 +222,6 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
     startTime = time.time()
     print(f'[readCam] FrameOffset: {frameOffset}')
     print(f'[readCam] a3daName: {a3daName}')
-    rawBuffer:array = array('d')   #Array of doubles
     cameras:dict[int, A3daCamera] = {}  #It's technically posible to have more than one camera, but i think only MGF has more than one and in some pv's only
     dof:A3daCamObj = A3daCamObj()
     has_dof = False
@@ -274,8 +276,8 @@ def readCam(a3daFile, a3daName, frameOffset=0, config:ImportConfig=None):
                 elif params[3] == 'focal_length':  #MGF     #Then animate this in mm.
                     camera.focal_length.parseA3daLine(params[4:], data, frameOffset)
 
-            else:       #TODO: Root reading
-                pass
+            elif params[2] in {"trans", "rot", "scale", "visibility"}:
+                camera.root.parseTransform(params[2:], data, frameOffset)
 
         elif params[0] == 'dof' and config.use_dof and len(params) > 2:
             has_dof = True

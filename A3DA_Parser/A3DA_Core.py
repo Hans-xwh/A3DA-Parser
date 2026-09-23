@@ -357,7 +357,7 @@ class A3daBaseObj:      #Im gonna have to make all other classes inherit from th
             case "rotation_euler": transform = self.rotation
             case "scale": transform = self.scale
             case "visibility": return self.visibility
-            case _: print(f'[getTransform] Failed to determine transform {channel}');
+            case _: print(f'[getTransform] Failed to determine transform "{channel}"');
         
         if axis == None: return transform
 
@@ -389,7 +389,9 @@ class A3daBaseObj:      #Im gonna have to make all other classes inherit from th
             channel.parseA3daLine(params[2:], data, frameOffset)
 
         else:   #This should catch visibility
-            channel = self.getTransform(params[0])
+            channel = self.getTransform(params[0])  #getTransform returns None if unmatched
+            if channel is None: return
+            
             channel.parseA3daLine(params[1:], data, frameOffset)
             
     def animate(self, obj:bpy.types.Object, config:ImportConfig=None):

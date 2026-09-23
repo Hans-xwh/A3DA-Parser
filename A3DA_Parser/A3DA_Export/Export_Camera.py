@@ -1,28 +1,26 @@
 # Copyright (C) 2026 Hans_Xwh - Licensed under GPL v3.
 
-from pathlib import Path
-
-from .. A3DA_Core import A3daChannel, switchAxis, getChannelbag
+from .. A3DA_Core import switchAxis, getChannelbag
 from .. A3DA_Import.A3DA_Camera import A3daCamera, A3daCamObj
 from . Export_Core import get_transform_lines, get_channel_lines, get_channel_raw
 
 import bpy
 from io import TextIOWrapper
 
-def build_cam(bl_cam:bpy.types.Object) -> tuple[A3daCamera, A3daCamObj, A3daCamObj]:    #Camera, DOF, Root
+def build_cam(bl_cam:bpy.types.Object) -> tuple[A3daCamera, A3daCamObj]:    #Camera, DOF, Root
     print("Building Camera...")
     cam = A3daCamera()
     dof = None
-    root = A3daCamObj()
 
     ### Get references ###
     bl_viewpoint = bl_cam.parent
     cam.view_point.bl_reference = bl_viewpoint
     cam.bl_camera = bl_cam
 
-    if not bl_viewpoint or not bl_viewpoint.parent: return None, None, None
+    if not bl_viewpoint or not bl_viewpoint.parent: return None, None
     bl_root = bl_viewpoint.parent
-    root.bl_reference = bl_root
+    #root.bl_reference = bl_root
+    cam.root.bl_reference = bl_root
 
     for child in bl_root.children:
         match child.auth3d_cam.subtype:
@@ -35,7 +33,7 @@ def build_cam(bl_cam:bpy.types.Object) -> tuple[A3daCamera, A3daCamObj, A3daCamO
 
     ### Build animation ###
     obj:A3daCamObj
-    for obj in {cam.interest, cam.view_point, dof, root}:
+    for obj in {cam.interest, cam.view_point, dof, cam.root}:
         if obj is None: continue
 
         ## Get channelbag and stuff ##
@@ -55,10 +53,10 @@ def build_cam(bl_cam:bpy.types.Object) -> tuple[A3daCamera, A3daCamObj, A3daCamO
             cam.roll.fromFCurve(cam_chbg.fcurves.find('rotation_euler', index=2))
             cam.fov.fromFCurve(cam_chbg.fcurves.find('auth3d_cam.fov'))
 
-    return cam, root, dof
+    return cam, dof
 
 
-def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a3da_dof: A3daCamObj, use_raw: bool=True):
+def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_dof: A3daCamObj, use_raw: bool=True):
     interest_prefix = 'camera_root.0.interest'
     viewpoint_prefix = 'camera_root.0.view_point'
 
@@ -81,10 +79,11 @@ def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a
     a3da.write(f'{interest_prefix}.visibility.value=1\n')
 
     #Root transforms
-    root_obj = a3da_root if a3da_root else A3daCamObj()
+    #root_obj = a3da_root if a3da_root else A3daCamObj()
+    root_obj = a3da_cam.root
     for transform in ('rot', 'scale', 'trans'):
         a3da.write("\n".join(
-            get_transform_lines(f'camera_root.0.{transform}', root_obj.getTransform(transform), raw=use_raw, safe=(transform == 'scale'))   #Not really sure if diva can use an animated root (YES IT CAN)
+            get_transform_lines(f'camera_root.0.{transform}', root_obj.getTransform(transform), raw=use_raw, safe=(transform == 'scale'))
         ) + "\n")
 
     #Viewpoint stuff
@@ -92,7 +91,6 @@ def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a
 
     #fov
     a3da.write("\n".join(
-        #get_channel_raw(f'{viewpoint_prefix}.fov', a3da_cam.fov) if use_raw else get_channel_lines(f'{viewpoint_prefix}.fov', a3da_cam.fov)
         get_channel(f'{viewpoint_prefix}.fov', a3da_cam.fov)
     ) + "\n")
 
@@ -100,7 +98,6 @@ def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a
 
     #roll
     a3da.write("\n".join(
-        #get_channel_raw(f'{viewpoint_prefix}.roll', a3da_cam.roll) if use_raw else get_channel_lines(f'{viewpoint_prefix}.roll', a3da_cam.roll)
         get_channel(f'{viewpoint_prefix}.roll', a3da_cam.roll)
     ) + "\n")
 
@@ -131,5 +128,5 @@ def write_cam(a3da:TextIOWrapper, a3da_cam: A3daCamera, a3da_root: A3daCamObj, a
             get_transform_lines(f'dof.{transform}', a3da_dof.getTransform(transform), raw=use_raw)
         ) + "\n")
 
-    a3da.write(f'dof.0.visibility.type=1\n')
-    a3da.write(f'dof.0.visibility.value=1\n')
+    a3da.write(f'dof.visibility.type=1\n')
+    a3da.write(f'dof.visibility.value=1\n')

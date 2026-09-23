@@ -12,7 +12,7 @@ import bpy
 from pathlib import Path
 from datetime import datetime
 
-def write_a3da(path:Path, hrcList:list[HrcObject]=None, objList:list[A3daObject]=None, cam:tuple[A3daCamera, A3daCamObj,A3daCamObj:None]=None, use_raw=True) -> bool:
+def write_a3da(path:Path, hrcList:list[HrcObject]=None, objList:list[A3daObject]=None, cam:tuple[A3daCamera, A3daCamObj:None]=None, use_raw=True) -> bool:
     print("Writing A3DA...")
     now = datetime.now()
 
@@ -32,7 +32,7 @@ def write_a3da(path:Path, hrcList:list[HrcObject]=None, objList:list[A3daObject]
 
     #Write camera
     if cam and cam[0] is not None:
-        write_cam(a3da, cam[0], cam[1], cam[2], use_raw)    #TODO this should also export the root object
+        write_cam(a3da, cam[0], cam[1], use_raw)
 
     #Write Objects
     if objList and len(objList) > 0:
