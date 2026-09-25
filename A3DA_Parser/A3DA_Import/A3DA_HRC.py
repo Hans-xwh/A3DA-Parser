@@ -1,12 +1,12 @@
 # Copyright (C) 2026 Hans_Xwh - Licensed under GPL v3.
 
-from ..A3DA_Core import switchAxis, parseA3daKey, setA3daChannel, readRawLine, parseRawLine, ensureAction
-from .A3DA_Objects import A3daObject, findChild
+from ..A3DA_Core import A3daBaseObj, switchAxis, setA3daChannel, ensureAction
+from .A3DA_Objects import findChild
 
 import bpy
 from array import array
 
-class HrcNode(A3daObject):
+class HrcNode(A3daBaseObj):
     def __init__(self, Id=0, Name="", Parent:int=-1):
         super().__init__(Id, Name)
 
@@ -23,7 +23,7 @@ class HrcObject:
 class M_Hrc(HrcObject):
     def __init__(self, Id:int=0, Name:str=""):
         super().__init__(Id, Name)
-        self.instances:dict[int, A3daObject] = dict()    #M_HRC instances can be represented os objects, since they contain id, name, uid_name. Evey instances rehuses the same nodes
+        self.instances:dict[int, A3daBaseObj] = dict()    #M_HRC instances can be represented os objects, since they contain id, name, uid_name. Evey instances rehuses the same nodes
 
 
 #### HRC Utils ####
@@ -79,73 +79,9 @@ def parseHrc(hrc:HrcObject, params:list, data:list|str, frameOffset=0, rawBuffer
     elif params[4] == 'parent':
         node.parent = int(data)
 
-    #Node visibility (Almost always 1?)
-    elif params[4] == 'visibility':
-        #print(f'[parseHrc] Node visibility: {data}')
-        if params[5] == 'type':
-            node.setParam(params[4], interpolation=data)
+    elif params[4] in {'trans', 'rot', 'scale', 'visibility'}:
+        node.parseTransform(params[4:], data, frameOffset)
 
-        elif params[5] == 'ep_type_post':
-                node.setParam(params[4], ep_post=data)
-
-        elif params[5] == 'ep_type_pre':
-                node.setParam(params[4], ep_pre=data)
-            
-        elif params[5] == 'value':
-            node.pushKey(
-                transform= params[4],
-                keyIndex= 0,
-                axis= None,
-                keyframe= parseA3daKey(data, frameOffset, not_key=True)
-            )
-
-        elif params[5] == 'key' and params[6] != 'length' and params[7] == 'data':
-            node.pushKey(
-                transform= params[4],
-                axis= None,
-                keyIndex= int(params[6]),
-                keyframe= parseA3daKey(data, frameOffset)
-            )
-
-    #regular transforms
-    elif params[6] == 'key' and params[7] != 'length' and params[8] == 'data':
-        node.pushKey(
-            transform= params[4],
-            axis= params[5],
-            keyIndex= int(params[7]),
-            keyframe= parseA3daKey(data, frameOffset)
-        )
-        #print('[parseHrc] Key pushed!')
-
-    elif params[6] == 'value':
-        node.pushKey(
-            transform= params[4],
-            axis= params[5],
-            keyIndex= 0,
-            keyframe= parseA3daKey(data, frameOffset, not_key=True)
-        )
-
-    elif params[6] == 'type':
-        node.setParam(
-            transform= params[4],
-            axis= params[5],
-            interpolation= int(data)
-        )
-
-        if data == '0':   #Type 0 means a curve is always 0
-            node.pushKey(
-                transform= params[4],
-                axis= params[5],
-                keyIndex= 0,
-                keyframe= parseA3daKey(data, frameOffset, not_key=True)
-            )
-
-    elif params[6] == 'raw_data' and params[7] == 'value_list':
-        readRawLine(rawBuffer, data)
-            
-    elif params[6] == 'raw_data_key_type':  #This tells what to do whit the raw data
-        channel = node.getTransform(params[4], params[5])
-        parseRawLine(rawBuffer, channel, data)
 
 def animateHrc(hrc:HrcObject, frameOffset=0, use_ghost:bool=True) -> bpy.types.Armature:
     print('\n[animateHrc] Begin writing HRC to Blender')
@@ -182,14 +118,6 @@ def animateHrc(hrc:HrcObject, frameOffset=0, use_ghost:bool=True) -> bpy.types.A
             channel= hrc.nodes[0].visibility,
             frameOffset= frameOffset
             )
-
-
-    ##Ensure armature has action
-    #if not armObj.animation_data:
-    #    armObj.animation_data_create()
-    #if not armObj.animation_data.action:
-    #    armObj.animation_data.action = bpy.data.actions.new(name=f'{node.name} Action')
-    #action = armObj.animation_data.action
 
     ## Iterate trough nodes and make sure all exist & are parented ##
     bpy.ops.object.mode_set(mode='EDIT')
