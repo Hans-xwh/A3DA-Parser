@@ -39,6 +39,8 @@ class ImportConfig:
         self.force_load_first:bool = False
         self.auto_gnd:bool = True
         self.endian = 'AUTO'    #Endianess of dsc files (AUTO, BIG, LITTLE)
+        self.import_mode = 'SINGLE'  #Import mode (SINGLE, CAM, SEQUENCIAL, SPLIT_CAM)
+        self.place_markers:bool = False
 
 
 class BezierCurve:  #A bezier curve formed by its 4 points.
@@ -271,7 +273,6 @@ class A3daChannel:
                     self.ep_pre = 2
                 elif mod.mode_before == 'REPEAT_OFFSET':
                     self.ep_pre = 3
-                    
                 if mod.mode_after == 'REPEAT':
                     self.ep_post = 2
                 elif mod.mode_after == 'REPEAT_OFFSET':
@@ -516,7 +517,7 @@ def setFcurveKey(fCurve:bpy.types.FCurve, keyframe:A3daKeyframe=None, interpoTyp
     keyPoint = fCurve.keyframe_points[writeIndex]
     keyPoint.co = (keyframe.frame, keyframe.value)
 
-    if interpoType in (0, 1, 2):
+    if interpoType == 2: #Linear
         keyPoint.interpolation = 'LINEAR'
 
     if interpoType == 3: #Bezier
@@ -548,7 +549,7 @@ def setFcurveKey(fCurve:bpy.types.FCurve, keyframe:A3daKeyframe=None, interpoTyp
             keyPoint.handle_left = (bCurveIn.b3x, bCurveIn.b3y)
         #fCurve.update()
 
-    elif interpoType == 4:
+    elif interpoType in (0, 1, 4):
         keyPoint.interpolation = 'CONSTANT'
 
     #fCurve.update()
@@ -557,15 +558,32 @@ def setA3daChannel(fcurve:bpy.types.FCurve, channel:A3daChannel, frameOffset:int
 
     #total_key_count = len(fcurve.keyframe_points) + len(channel.keys)
     a3da_key_count = len(channel.keys)
-
     writePointer = len(fcurve.keyframe_points)
 
-    if writePointer > 0:    #Experimental
-        fcurve.keyframe_points[-1].interpolation = 'CONSTANT'
+    if a3da_key_count <= 0: return
+
+    #Look for previous key to check for overwrites
+    #prev_key:bpy.types.Keyframe = None
+    prev_index:int = -1
+    prev_frame:int = -1
+    if writePointer > 0:
+        for i, key in enumerate(fcurve.keyframe_points):
+            if key.co[0] <= channel.keys[0].frame:
+                prev_index = i
+            else:
+                break
+
+        #if prev_key: prev_key.interpolation = 'CONSTANT'
 
     #Initialize curve by reserving memory for all keys
     fcurve.auto_smoothing = "NONE"
     fcurve.keyframe_points.add(a3da_key_count)
+
+    #Save frame to check overlap
+    if prev_index >= 0:
+        kp = fcurve.keyframe_points[prev_index]
+        prev_frame = kp.co[0]
+        kp.interpolation = 'CONSTANT'
 
     #Write all keys
     index = 0
@@ -574,20 +592,11 @@ def setA3daChannel(fcurve:bpy.types.FCurve, channel:A3daChannel, frameOffset:int
         key = channel.keys[index]
 
         #Key Overwrite Protection
-        if index < a3da_key_count -1 and key.frame == channel.keys[index + 1].frame: #Check if key will be overwritten by next
-            #if writePointer > 0 and key.value == channel.keys[index - 1].value: #Unsafe
-            if writePointer > 0 and abs(key.value - fcurve.keyframe_points[writePointer - 1].co[1]) < 0.001: #Check if not first key, then check if previous and current have the same value. This means last one is a hold
-                fcurve.keyframe_points[writePointer - 1].interpolation = 'CONSTANT' #Make previous key constant
-                
-                index += 1
-                continue    #Increas only index. Skip writing current key
+        if prev_index >= 0 and abs(key.frame - prev_frame) < 0.1:  #Check if current key will overwrite previous
+            kp = fcurve.keyframe_points[prev_index]
+            kp.co = (float(kp.co[0]) - 0.1, kp.co[1])
 
-            elif writePointer == 0:
-                key.frame = frameOffset #If this is the first key, move it to the start
-                interpolation = 4       #And make it constant to preserve the hold. No key skipped
 
-            else:   #Last resource, offset current key so it won't be overwritten
-                key.frame -= 0.1
 
         #Write key
         setFcurveKey(
@@ -600,13 +609,19 @@ def setA3daChannel(fcurve:bpy.types.FCurve, channel:A3daChannel, frameOffset:int
         )
 
         #Advance counters
+        prev_index = writePointer
+        prev_frame = key.frame
         index += 1
         writePointer += 1
 
+    #Make final key constant
+    fcurve.keyframe_points[writePointer-1].interpolation = 'CONSTANT'
+        
+
     #Cleanup unused curve spaces
-    if writePointer < len(channel.keys):
-        for _ in range(len(channel.keys) - writePointer):
-            fcurve.keyframe_points.remove(fcurve.keyframe_points[-1]) #Delete last space in the fcurve
+    if writePointer < len(fcurve.keyframe_points):
+        while len(fcurve.keyframe_points) > writePointer:
+            fcurve.keyframe_points.remove(fcurve.keyframe_points[-1])
 
     #Finish by updating fcurve
     fcurve.update()

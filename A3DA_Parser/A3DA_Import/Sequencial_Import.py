@@ -126,14 +126,7 @@ def sequencialRead_FT(a3da_path:str, pv_field_path:str, dsc_path:str, config:Imp
     if folder.is_file():
         folder = folder.parent
 
-    #print(f'[sequencialRead] folder: {folder}')
-    for file in folder.iterdir():
-        #print(f'[sequencialRead] Checking file: {file.name}')
-        if file.is_file() and file.suffix in ('.a3da', '.A3DA'):
-            a3daFolder.files[file.stem.upper()] = file
-            a3daFolder.imported[file.stem.upper()] = False
-            #print(f'Detected: {file.stem}')
-        else: continue
+    a3daFolder.populate(folder)
     print(f'[sequencialRead] Detected {len(a3daFolder.files)} files')
     print(f'Selected game: {config.game}')
 

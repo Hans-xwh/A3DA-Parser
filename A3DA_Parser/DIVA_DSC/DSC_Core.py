@@ -22,6 +22,15 @@ class A3daFolder:
         self.files:dict[str, Path] = {}
         self.imported:dict[str, bool] = {}
 
+    def populate(self, folder:Path|str):
+        if isinstance(folder, str):
+            folder = Path(folder)
+
+        for file in folder.iterdir():
+            if file.is_file() and file.suffix in ('.a3da', '.A3DA'):
+                self.files[file.stem.upper()] = file
+                self.imported[file.stem.upper()] = False
+            else: continue
 
 ### DSC Core ###
 def DscToFrame(dsc) -> int:  # Convert Diva Script time to Blender frames. Always integers

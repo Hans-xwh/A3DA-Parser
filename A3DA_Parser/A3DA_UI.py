@@ -10,6 +10,7 @@ from . import Parse_A3DA
 from .A3DA_Import import A3DA_Camera
 from . import A3DA_Core
 from .A3DA_Import import Sequencial_Import
+from .A3DA_Import import Sequencial_Camera
 
 config = None
 
@@ -31,6 +32,7 @@ class ImportA3DAOperator(Operator, ImportHelper):
             ('SINGLE', "Single file", "Import a single A3DA file"),
             ('SEQUENCIAL', "Full PV import", "Import multiple A3DAs using DivaScript"),
             ("CAM", "Import Camera", "Import camera animation"),
+            ("SPLIT_CAM", "Split Camera", "Import a split camera animation")
         ],
         default='SINGLE'
     )
@@ -163,11 +165,18 @@ class ImportA3DAOperator(Operator, ImportHelper):
         default= True
     )
 
-    #USe DOF togglew
+    #Use DOF toggle
     use_dof : BoolProperty( #type: ignore
         name="Use DOF",
         description="Use Depth of Field animation if available",
         default=True,
+    )
+
+    #Place Markers
+    place_markers : BoolProperty( #type: ignore
+        name="Place Markers",
+        description="Place timeline markers for camera & field changes.",
+        default=False,
     )
 
     ### Hide options based on mode ###
@@ -211,16 +220,25 @@ class ImportA3DAOperator(Operator, ImportHelper):
             hrcCol.prop(self, "use_hrc_ghost")
             hrcCol.enabled = self.use_hrc
 
-        if self.import_mode == 'CAM':
+        if self.import_mode in {'CAM', 'SPLIT_CAM'}:
             camBox = layout.box()
             camBox.label(text="Camera options")
             camBox.prop(self, "use_dof")
 
         #Single file loading
-        if self.import_mode in ('SINGLE', 'CAM'):
+        if self.import_mode in {'SINGLE', 'CAM'}:
             singleFBox = layout.box()
             singleFBox.label(text="File options")
             singleFBox.prop(self, "use_file_begin")
+
+        if self.import_mode == 'SPLIT_CAM':
+            seqBox = layout.box()
+            seqBox.label(text="Split Camera options")
+            seqBox.prop(self, "game_sel")
+
+            seqBox.separator()
+            seqBox.prop(self, "use_pv_branch")
+            seqBox.prop(self, "place_markers")
 
         #Sequencial
         if self.import_mode == 'SEQUENCIAL':
@@ -239,9 +257,9 @@ class ImportA3DAOperator(Operator, ImportHelper):
         #Build config
         global config
         config = A3DA_Core.ImportConfig()
+        config.import_mode = self.import_mode
         config.use_file_begin = self.use_file_begin
         config.ensure_compatibility = self.compatibility_mode
-        #use_file_begin = self.use_file_begin if self.import_mode == 'SINGLE' else False,
         config.use_objects = self.use_objects
         config.use_visibility = self.use_visibility
         config.inherit_visibility = self.inherit_visibility
@@ -257,6 +275,7 @@ class ImportA3DAOperator(Operator, ImportHelper):
         config.use_pv_branch = self.use_pv_branch
         config.auto_gnd = self.auto_gnd
         config.force_load_first = self.force_load_first
+        config.place_markers = self.place_markers
 
         #Run import code
         try:
@@ -295,6 +314,13 @@ class ImportA3DAOperator(Operator, ImportHelper):
                 config.use_file_begin = False
                 #Sequencial_Import.sequencialRead(self.filepath)
                 bpy.ops.a3da.pvfield_import(
+                    'INVOKE_DEFAULT',
+                    a3da_path= self.filepath,
+                )
+
+            elif self.import_mode == 'SPLIT_CAM':
+                config.use_file_begin = False
+                bpy.ops.a3da.dsc_import(
                     'INVOKE_DEFAULT',
                     a3da_path= self.filepath,
                 )
@@ -406,12 +432,22 @@ class A3DA_OT_Import_DSC(Operator, ImportHelper):
         #print(f"Config: {config}")
 
         #This will run sequencial import
-        Sequencial_Import.sequencialRead_FT(
-            self.a3da_path,
-            self.pvField_path,
-            self.dsc_path,
-            config
-        )
+        if config.import_mode == 'SPLIT_CAM':
+            print("Split camera import")
+            Sequencial_Camera.splitCamRead(
+                self.a3da_path,
+                self.dsc_path,
+                config,
+            )
+        else:
+            print("Sequencial import")
+            Sequencial_Import.sequencialRead_FT(
+                self.a3da_path,
+                self.pvField_path,
+                self.dsc_path,
+                config
+            )
+        
         return {'FINISHED'}
     
 classes = [

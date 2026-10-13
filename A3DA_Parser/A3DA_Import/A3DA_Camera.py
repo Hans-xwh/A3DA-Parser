@@ -135,11 +135,13 @@ def setupFovDriver(camera:A3daCamera, compatibility=False) -> tuple[str]:
     #Make FOV driver, then add scale
     driver = createObjDriver(camera.bl_camera, fov_prop, camera.bl_camera.data, 'lens', var_name="FOV",
                     expression='(36 / (2* tan( FOV / 2))) * s')
-    
-    scaleVar = driver.variables.new()
-    scaleVar.name = 's'
-    scaleVar.targets[0].id = camera.bl_camera
-    scaleVar.targets[0].data_path = fov_scale
+
+    scaleVar = driver.variables.get("s")
+    if not scaleVar:
+        scaleVar = driver.variables.new()
+        scaleVar.name = 's'
+        scaleVar.targets[0].id = camera.bl_camera
+        scaleVar.targets[0].data_path = fov_scale
 
     return fov_prop, fov_scale
 
@@ -156,12 +158,12 @@ def animateCamObj(obj:A3daCamObj):
             if len(channel.keys) == 0:
                 continue
             
-            elif len(channel.keys) == 1:
-                vector = getattr(target, switchAxis(transform))
-                setattr(vector, axis, channel.keys[0].value)
-                target.keyframe_insert(switchAxis(transform), index=switchAxis(axis),
-                                       frame=channel.keys[0].frame)
-                continue
+            #elif len(channel.keys) == 1 and False:
+            #    vector = getattr(target, switchAxis(transform))
+            #    setattr(vector, axis, channel.keys[0].value)
+            #    target.keyframe_insert(switchAxis(transform), index=switchAxis(axis),
+            #                           frame=channel.keys[0].frame)
+            #    continue
 
             fcurve = action.fcurve_ensure_for_datablock(
                 datablock= target,
@@ -192,13 +194,8 @@ def animateCam(camera:A3daCamera=None, dof:A3daCamObj=None, config:ImportConfig=
         fov_prop, fov_scale = setupFovDriver(camera, config.ensure_compatibility)
         fcurve = cam_action.fcurve_ensure_for_datablock(
             camera.bl_camera, fov_prop)
-        if len(camera.fov.keys) == 1 and False:
-            vector = getattr(camera.bl_camera.auth3d_cam, 'fov')
-            setattr(camera.bl_camera.auth3d_cam, 'fov', camera.fov.keys[0].frame)
-            camera.bl_camera.keyframe_insert('auth3d_cam.fov',
-                                   frame=camera.fov.keys[0].frame)
-        else:
-            setA3daChannel(fcurve, camera.fov)
+
+        setA3daChannel(fcurve, camera.fov)
 
     else:
         if not camera.bl_camera.data.animation_data:
